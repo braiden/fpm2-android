@@ -1,10 +1,8 @@
 package org.braiden.fpm2;
 
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.PBEKeySpec;
 
 public class FpmCrypt
 {
