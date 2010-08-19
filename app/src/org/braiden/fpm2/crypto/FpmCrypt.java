@@ -1,4 +1,4 @@
-package org.braiden.fpm2;
+package org.braiden.fpm2.crypto;
 
 import java.security.spec.InvalidKeySpecException;
 

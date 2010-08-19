@@ -1,10 +1,11 @@
-package org.braiden.fpm2;
+package org.braiden.fpm2.crypto;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 import org.apache.commons.codec.binary.Hex;
+import org.braiden.fpm2.crypto.PBKDF2KeyGenerator;
 
 import junit.framework.TestCase;
 
