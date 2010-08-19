@@ -1,22 +1,9 @@
 package org.braiden.fpm2.crypto;
 
-import java.security.spec.InvalidKeySpecException;
-
-import javax.crypto.SecretKey;
-
-public class FpmCrypt
+public class FpmCryptUtils
 {
 	
-	protected static SecretKey buildSecretKey(String passphrase, byte[] salt) throws InvalidKeySpecException {
-//
-//		PBKDF2SecretKeyFactory keyFactory = new PBKDF2SecretKeyFactory.HMacSHA256();
-//		
-//		KeySpec keySpec = new PBEKeySpec(passphrase.toCharArray(), salt, 8192, 32);
-//		SecretKey key = keyFactory.engineGenerateSecret(keySpec);
-		return null;
-	}
-	
-	protected static byte[] decodeString(String s)
+	public static byte[] decodeString(String s)
 	{
 		byte[] result = new byte[s.length()/2];
 
@@ -30,7 +17,7 @@ public class FpmCrypt
 		return result;		
 	}
 
-	protected static byte[] unrotate(byte[] data, int blockSizeBytes)
+	public static byte[] unrotate(byte[] data, int blockSizeBytes)
 	{
 		byte result[] = new byte[data.length];
 		

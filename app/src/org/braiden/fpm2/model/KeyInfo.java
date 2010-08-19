@@ -1,6 +1,6 @@
 package org.braiden.fpm2.model;
 
-public class KeyInfo {
+public class KeyInfo implements Cloneable {
 
 	private String cipher;
 	private String salt;
@@ -28,6 +28,11 @@ public class KeyInfo {
 	
 	public void setVstring(String vstring) {
 		this.vstring = vstring;
+	}
+
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		return super.clone();
 	}
 	
 }

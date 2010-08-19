@@ -7,29 +7,28 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-public class PBKDF2KeyGenerator {
+public class PBKDF2KeyGenerator implements KeyGenerator {
 
 	private static final int DEFAULT_KEY_LENGTH_BYTES = 32;
 	private static final int DEFAULT_ITERATIONS = 8192;
 	private static final String DEFAULT_HMAC_ALGORITH = "HMACSHA256";
 	
-	private byte[] salt;
 	private int keyLengthBytes;
 	private int iterations;
 	private Mac hmac;
 	
-	public PBKDF2KeyGenerator(byte[] salt) throws NoSuchAlgorithmException {
-		this(salt, DEFAULT_KEY_LENGTH_BYTES, DEFAULT_ITERATIONS, DEFAULT_HMAC_ALGORITH);
+	public PBKDF2KeyGenerator() throws NoSuchAlgorithmException {
+		this(DEFAULT_KEY_LENGTH_BYTES, DEFAULT_ITERATIONS, DEFAULT_HMAC_ALGORITH);
 	}
 	
-	public PBKDF2KeyGenerator(byte[] salt, int keyLengthBytes, int iterations, String hmacAlgorith) throws NoSuchAlgorithmException	{
-		this.salt = salt;
+	public PBKDF2KeyGenerator(int keyLengthBytes, int iterations, String hmacAlgorith) throws NoSuchAlgorithmException	{
 		this.keyLengthBytes = keyLengthBytes;
 		this.iterations = iterations;
 		this.hmac = Mac.getInstance(hmacAlgorith);
 	}
 	
-	public byte[] generateKey(String secret) throws InvalidKeyException {
+	@Override
+	public byte[] generateKey(String secret, byte[] salt) throws InvalidKeyException {
 		SecretKey key = new SecretKeySpec(secret.getBytes(), hmac.getAlgorithm());
 		byte[] result = new byte[keyLengthBytes];
 		byte[] initialHashInput = new byte[salt.length + 4];

@@ -1,6 +1,6 @@
 package org.braiden.fpm2.model;
 
-public class PasswordItem {
+public class PasswordItem implements Cloneable {
 
 	private String user;
 	private String url;
@@ -73,6 +73,11 @@ public class PasswordItem {
 
 	public void setTitle(String title) {
 		this.title = title;
+	}
+
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		return super.clone();
 	}
 	
 }

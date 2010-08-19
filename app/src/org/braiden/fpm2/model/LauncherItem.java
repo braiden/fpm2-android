@@ -1,6 +1,6 @@
 package org.braiden.fpm2.model;
 
-public class LauncherItem {
+public class LauncherItem implements Cloneable {
 
 	private String title;
 	private String cmdline;
@@ -37,6 +37,11 @@ public class LauncherItem {
 
 	public void setCopyPassword(String copyPassword) {
 		this.copyPassword = copyPassword;
+	}
+
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		return super.clone();
 	}
 	
 }

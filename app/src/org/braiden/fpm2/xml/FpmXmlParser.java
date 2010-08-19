@@ -125,7 +125,7 @@ public class FpmXmlParser {
 			for (int n = 0; n < qName.length(); n++)
 			{
 				char c = qName.charAt(n);
-				if (c == '_')
+				if (c == '_' && n > 0 && n + 1 < qName.length())
 				{
 					c = Character.toUpperCase(qName.charAt(++n));
 				}

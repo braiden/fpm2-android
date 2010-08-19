@@ -39,7 +39,7 @@ public class FpmXmlParserTest extends TestCase {
 		assertEquals(fpm.getPasswordItems().get(0).getTitle(), "ndoaklplaoaonbpgjnikehlcdjheclgf");
 
 		assertTrue(fpm.getPasswordItems().get(0).isDefault());
-		assertFalse(fpm.getPasswordItems().get(1).isDefault());
+		assertFalse(fpm.getPasswordItems().get(1).isDefault());		
 	}
 	
 }
