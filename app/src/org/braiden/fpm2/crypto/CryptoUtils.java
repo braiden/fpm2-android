@@ -1,4 +1,4 @@
-package org.braiden.fpm2.model;
+package org.braiden.fpm2.crypto;
 
 /**
  * Copyright (c) 2009 Braiden Kindt
@@ -26,39 +26,36 @@ package org.braiden.fpm2.model;
  *
  */
 
-public class KeyInfo implements Cloneable, DataObject {
+public class CryptoUtils
+{
+	
+	public static byte[] decodeString(String s)
+	{
+		byte[] result = new byte[s.length()/2];
 
-	private String cipher;
-	private String salt;
-	private String vstring;
-	
-	public String getCipher() {
-		return cipher;
-	}
-	
-	public void setCipher(String cipher) {
-		this.cipher = cipher;
-	}
-	
-	public String getSalt() {
-		return salt;
-	}
-	
-	public void setSalt(String salt) {
-		this.salt = salt;
-	}
-	
-	public String getVstring() {
-		return vstring;
-	}
-	
-	public void setVstring(String vstring) {
-		this.vstring = vstring;
+		for (int n = 0; n < s.length() / 2; n++) {
+			byte high = (byte) (s.charAt(n * 2) - 'a');
+			byte low = (byte) (s.charAt(n * 2 + 1) - 'a');
+			result[n] = low;
+			result[n] |= high << 4;
+		}
+		
+		return result;		
 	}
 
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		return super.clone();
+	public static byte[] unrotate(byte[] data, int blockSizeBytes)
+	{
+		byte result[] = new byte[data.length];
+		
+		int numBlocks = data.length / blockSizeBytes;
+		
+		for (int block = 0; block < numBlocks; block++) {
+			for (int el = 0; el < blockSizeBytes; el++)	{
+				result[el * numBlocks + block] = data[block * blockSizeBytes + el];
+			}
+		}
+		
+		return result;
 	}
-	
+
 }

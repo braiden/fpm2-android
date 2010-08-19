@@ -34,7 +34,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.braiden.fpm2.model.FpmFile;
-import org.braiden.fpm2.model.FpmDataObject;
+import org.braiden.fpm2.model.DataObject;
 import org.braiden.fpm2.model.KeyInfo;
 import org.braiden.fpm2.model.LauncherItem;
 import org.braiden.fpm2.model.PasswordItem;
@@ -44,7 +44,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import android.util.Log;
 
-public class FpmXmlParser {
+public class FpmFileXmlParser {
 
 	private static final String TAG = "FpmXmlParser";
 	
@@ -66,7 +66,7 @@ public class FpmXmlParser {
 		public static final String TAG_DEFAULT = "default";
 		
 		private FpmFile fpmFile = null;
-		private FpmDataObject currentNode = null;
+		private DataObject currentNode = null;
 		private StringBuffer currentText = null;
 
 		public FpmFile getFpmFile() {
@@ -83,7 +83,7 @@ public class FpmXmlParser {
 		public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {			
 			super.startElement(uri, localName, qName, attributes);
 			
-			FpmDataObject thisNode = null;
+			DataObject thisNode = null;
 			
 			if (qName.equals(TAG_FPM)) {
 				thisNode = fpmFile;
@@ -132,7 +132,7 @@ public class FpmXmlParser {
 			}
 		}
 
-		private void applyAttributesToBean(FpmDataObject bean, Attributes attributes) {
+		private void applyAttributesToBean(DataObject bean, Attributes attributes) {
 			for (int n = 0; n < attributes.getLength(); n++) {
 				String propertyName = toCamelCase(attributes.getQName(n));
 				String value = attributes.getValue(n);
