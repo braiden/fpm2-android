@@ -11,7 +11,7 @@ public class FpmFileXmlParserTest extends TestCase {
 
 	public void testParse() throws Exception
 	{
-		InputStream is = new FileInputStream("assets/fpm.xml");
+		InputStream is = FpmFileXmlParserTest.class.getResourceAsStream("fpm.xml");
 		FpmFile fpm = FpmFileXmlParser.parse(is);
 		
 		assertEquals(3, fpm.getLauncherItems().size());
