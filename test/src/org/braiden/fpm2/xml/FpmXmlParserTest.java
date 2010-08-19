@@ -3,7 +3,7 @@ package org.braiden.fpm2.xml;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-import org.braiden.fpm2.model.Fpm;
+import org.braiden.fpm2.model.FpmFile;
 
 import junit.framework.TestCase;
 
@@ -12,7 +12,7 @@ public class FpmXmlParserTest extends TestCase {
 	public void testParse() throws Exception
 	{
 		InputStream is = new FileInputStream("assets/fpm.xml");
-		Fpm fpm = FpmXmlParser.parse(is);
+		FpmFile fpm = FpmXmlParser.parse(is);
 		
 		assertEquals(3, fpm.getLauncherItems().size());
 		assertEquals(3, fpm.getPasswordItems().size());

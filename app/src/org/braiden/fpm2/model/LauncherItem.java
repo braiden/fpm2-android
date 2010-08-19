@@ -26,7 +26,7 @@ package org.braiden.fpm2.model;
  *
  */
 
-public class LauncherItem implements Cloneable {
+public class LauncherItem implements Cloneable, FpmDataObject {
 
 	private String title;
 	private String cmdline;

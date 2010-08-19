@@ -26,7 +26,7 @@ package org.braiden.fpm2.model;
  *
  */
 
-public class PasswordItem implements Cloneable {
+public class PasswordItem implements Cloneable, FpmDataObject {
 
 	private String user;
 	private String url;

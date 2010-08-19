@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Fpm implements Cloneable {
+public class FpmFile implements Cloneable, FpmDataObject {
 
 	private String fullVersion;
 	private String minVersion;
@@ -89,7 +89,7 @@ public class Fpm implements Cloneable {
 
 	@Override
 	public Object clone() throws CloneNotSupportedException {
-		Fpm clone = (Fpm) super.clone();
+		FpmFile clone = (FpmFile) super.clone();
 		clone.keyInfo = (KeyInfo) keyInfo.clone();
 		clone.launcherItems = new ArrayList<LauncherItem>(launcherItems.size());
 		clone.passwordItems = new ArrayList<PasswordItem>(passwordItems.size());

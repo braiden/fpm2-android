@@ -26,7 +26,7 @@ package org.braiden.fpm2.model;
  *
  */
 
-public class KeyInfo implements Cloneable {
+public class KeyInfo implements Cloneable, FpmDataObject {
 
 	private String cipher;
 	private String salt;
