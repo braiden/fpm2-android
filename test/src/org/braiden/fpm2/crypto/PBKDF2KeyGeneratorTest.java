@@ -4,12 +4,24 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-import org.apache.commons.codec.binary.Hex;
 import org.braiden.fpm2.crypto.PBKDF2KeyGenerator;
 
 import junit.framework.TestCase;
 
 public class PBKDF2KeyGeneratorTest extends TestCase {
+	
+    private static final char[] DIGITS_LOWER = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+	
+    private static String encodeHexString(byte[] data) {
+        int l = data.length;
+        char[] out = new char[l << 1];
+        // two characters form the hex value.
+        for (int i = 0, j = 0; i < l; i++) {
+            out[j++] = DIGITS_LOWER[(0xF0 & data[i]) >>> 4];
+            out[j++] = DIGITS_LOWER[0x0F & data[i]];
+        }
+        return new String(out);
+    }
 	
 	public void testHmacSha256() throws Exception
 	{
@@ -18,7 +30,7 @@ public class PBKDF2KeyGeneratorTest extends TestCase {
 		byte[] key = keyGenerator.generateKey("secret", salt.getBytes());
 		assertEquals(
 				"3dc7fa34fa2aa5cab9e1c00f75f1c7e39e20cbd12446c8d07cbd3de7568e7683",
-				Hex.encodeHexString(key));
+				encodeHexString(key));
 	}
 	
 	public void testHmacSha1() throws Exception
@@ -35,8 +47,10 @@ public class PBKDF2KeyGeneratorTest extends TestCase {
 			byte[] javaKey = javaSecretKey.getEncoded();
 			PBKDF2KeyGenerator myKeyGenerator = new PBKDF2KeyGenerator(keySpec.getKeyLength() / 8, keySpec.getIterationCount(), "HmacSHA1");
 			byte[] myKey = myKeyGenerator.generateKey(new String(keySpec.getPassword()), keySpec.getSalt());
-			assertEquals(Hex.encodeHexString(javaKey), Hex.encodeHexString(myKey));
+			assertEquals(encodeHexString(javaKey), encodeHexString(myKey));
 		}
 	}
+	
+	
 	
 }
