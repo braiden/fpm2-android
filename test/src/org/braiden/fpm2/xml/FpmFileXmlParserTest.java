@@ -1,6 +1,5 @@
 package org.braiden.fpm2.xml;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 
 import org.braiden.fpm2.model.FpmFile;
