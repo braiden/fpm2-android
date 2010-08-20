@@ -28,6 +28,7 @@ package org.braiden.fpm2.xml;
 
 import java.io.InputStream;
 
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -42,16 +43,15 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.util.Log;
+import android.util.Xml;
 
 public class FpmFileXmlParser {
 
 	private static final String TAG = "FpmXmlParser";
 	
 	public static FpmFile parse(InputStream is) throws Exception {
-		SAXParserFactory factory = SAXParserFactory.newInstance();
-		SAXParser parser = factory.newSAXParser();
 		FpmFileSaxHandler handler = new FpmFileSaxHandler();
-		parser.parse(is, handler);
+		Xml.parse(is, Xml.Encoding.UTF_8, handler);
 		return handler.getFpmFile();
 	}
 	
