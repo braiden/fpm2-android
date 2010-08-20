@@ -31,13 +31,12 @@ import java.io.InputStream;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.PropertyUtils;
 import org.braiden.fpm2.model.FpmFile;
 import org.braiden.fpm2.model.DataObject;
 import org.braiden.fpm2.model.KeyInfo;
 import org.braiden.fpm2.model.LauncherItem;
 import org.braiden.fpm2.model.PasswordItem;
+import org.braiden.fpm2.util.PropertyUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -50,7 +49,7 @@ public class FpmFileXmlParser {
 	
 	public static FpmFile parse(InputStream is) throws Exception {
 		SAXParserFactory factory = SAXParserFactory.newInstance();
-		factory.setNamespaceAware(false);
+		//factory.setNamespaceAware(false);
 		SAXParser parser = factory.newSAXParser();
 		FpmFileSaxHandler handler = new FpmFileSaxHandler();
 		parser.parse(is, handler);
@@ -85,15 +84,15 @@ public class FpmFileXmlParser {
 			
 			DataObject thisNode = null;
 			
-			if (qName.equals(TAG_FPM)) {
+			if (localName.equals(TAG_FPM)) {
 				thisNode = fpmFile;
-			} else if (qName.equals(TAG_KEY_INFO)) {
+			} else if (localName.equals(TAG_KEY_INFO)) {
 				thisNode = new KeyInfo();
 				fpmFile.setKeyInfo((KeyInfo) thisNode);
-			} else if (qName.equals(TAG_LAUNCHER_ITEM)) {
+			} else if (localName.equals(TAG_LAUNCHER_ITEM)) {
 				thisNode = new LauncherItem(); 
 				fpmFile.getLauncherItems().add((LauncherItem) thisNode);
-			} else if (qName.equals(TAG_PASSWORD_ITEM)) {
+			} else if (localName.equals(TAG_PASSWORD_ITEM)) {
 				thisNode = new PasswordItem();
 				fpmFile.getPasswordItems().add((PasswordItem) thisNode);
 			}
@@ -118,13 +117,13 @@ public class FpmFileXmlParser {
 		public void endElement(String uri, String localName, String qName)
 				throws SAXException {
 			super.endElement(uri, localName, qName);
-			String propertyName = toCamelCase(qName);
+			String propertyName = toCamelCase(localName);
 			if (currentText != null && currentNode != null && PropertyUtils.isWriteable(currentNode, propertyName)) {
 				try {
-					if (TAG_DEFAULT.equals(qName)) {
-						BeanUtils.setProperty(currentNode, propertyName, true);
+					if (TAG_DEFAULT.equals(localName)) {
+						PropertyUtils.setProperty(currentNode, propertyName, true);
 					} else {
-						BeanUtils.setProperty(currentNode, propertyName, currentText.toString().trim());
+						PropertyUtils.setProperty(currentNode, propertyName, currentText.toString().trim());
 					}
 				} catch (Exception e) {
 					Log.w(TAG, "Exception applying bean property \"" + propertyName + "\" to \"" + currentNode + "\".", e);
@@ -134,11 +133,11 @@ public class FpmFileXmlParser {
 
 		private void applyAttributesToBean(DataObject bean, Attributes attributes) {
 			for (int n = 0; n < attributes.getLength(); n++) {
-				String propertyName = toCamelCase(attributes.getQName(n));
+				String propertyName = toCamelCase(attributes.getLocalName(n));
 				String value = attributes.getValue(n);
 				if (PropertyUtils.isWriteable(bean, propertyName)) {
 					try {
-						BeanUtils.setProperty(bean, propertyName, value);
+						PropertyUtils.setProperty(bean, propertyName, value);
 					} catch (Exception e) {
 						Log.w(TAG, "Exception applying bean property \"" + propertyName + "\" to \"" + bean + "\".", e);
 					}
@@ -146,15 +145,15 @@ public class FpmFileXmlParser {
 			}
 		}
 		
-		private String toCamelCase(String qName) {
+		private String toCamelCase(String localName) {
 			StringBuffer result = new StringBuffer();
 			
-			for (int n = 0; n < qName.length(); n++)
+			for (int n = 0; n < localName.length(); n++)
 			{
-				char c = qName.charAt(n);
-				if (c == '_' && n > 0 && n + 1 < qName.length())
+				char c = localName.charAt(n);
+				if (c == '_' && n > 0 && n + 1 < localName.length())
 				{
-					c = Character.toUpperCase(qName.charAt(++n));
+					c = Character.toUpperCase(localName.charAt(++n));
 				}
 				result.append(c);
 			}

@@ -1,10 +1,14 @@
 package org.braiden.fpm2.crypto;
 
+import java.security.NoSuchAlgorithmException;
+
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 import org.braiden.fpm2.crypto.PBKDF2KeyGenerator;
+
+import android.util.Log;
 
 import junit.framework.TestCase;
 
@@ -34,7 +38,14 @@ public class PBKDF2KeyGeneratorTest extends TestCase {
 	
 	public void testHmacSha1() throws Exception
 	{
-		SecretKeyFactory javaSha1KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+		SecretKeyFactory javaSha1KeyFactory = null;
+		try {
+			javaSha1KeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");			
+		} catch (NoSuchAlgorithmException e) {
+			// this test doesn't run on android device, algo is not availible
+			Log.w("PBKDF2KeyGeneratorTest", "Skipping Test. PBKDF2WithHmacSHA1 is not availible.");
+			return;
+		}
 		
 		PBEKeySpec[] tests = {
 				new PBEKeySpec("secret".toCharArray(), "salt".getBytes(), 1024, 64),

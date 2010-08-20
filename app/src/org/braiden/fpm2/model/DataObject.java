@@ -26,6 +26,8 @@ package org.braiden.fpm2.model;
  *
  */
 
-public interface DataObject {
+public interface DataObject extends Cloneable {
 
+	Object clone() throws CloneNotSupportedException;
+	
 }

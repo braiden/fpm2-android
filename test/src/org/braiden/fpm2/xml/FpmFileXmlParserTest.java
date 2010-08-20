@@ -4,13 +4,13 @@ import java.io.InputStream;
 
 import org.braiden.fpm2.model.FpmFile;
 
-import junit.framework.TestCase;
+import android.test.InstrumentationTestCase;
 
-public class FpmFileXmlParserTest extends TestCase {
+public class FpmFileXmlParserTest extends InstrumentationTestCase {
 
 	public void testParse() throws Exception
 	{
-		InputStream is = FpmFileXmlParserTest.class.getResourceAsStream("fpm.xml");
+		InputStream is = getInstrumentation().getContext().getAssets().open("fpm.xml");
 		FpmFile fpm = FpmFileXmlParser.parse(is);
 		
 		assertEquals(3, fpm.getLauncherItems().size());

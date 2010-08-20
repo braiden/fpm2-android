@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class FpmFile implements Cloneable, DataObject {
+public class FpmFile implements DataObject {
 
 	private String fullVersion;
 	private String minVersion;

@@ -26,7 +26,7 @@ package org.braiden.fpm2.crypto;
  *
  */
 
-public class CryptoUtils
+public class FpmCryptoUtils
 {
 	
 	public static byte[] decodeString(String s)
