@@ -25,7 +25,7 @@ public class JCEDecrypter implements Decrypter {
 
 	@Override
 	public String decrypt(byte[] key, byte[] encryptedData) throws Exception {
-		SecretKey cipherKey = new SecretKeySpec(key, "AES");
+		SecretKey cipherKey = new SecretKeySpec(key, cipher.getAlgorithm());
 
 		cipher.init(Cipher.DECRYPT_MODE, cipherKey);
 		byte[] result = cipher.doFinal(encryptedData);
