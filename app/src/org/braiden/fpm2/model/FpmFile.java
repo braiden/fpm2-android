@@ -94,13 +94,11 @@ public class FpmFile implements DataObject {
 		clone.launcherItems = new ArrayList<LauncherItem>(launcherItems.size());
 		clone.passwordItems = new ArrayList<PasswordItem>(passwordItems.size());
 		
-		for (LauncherItem l : launcherItems)
-		{
+		for (LauncherItem l : launcherItems) {
 			clone.launcherItems.add((LauncherItem) l.clone());
 		}
 		
-		for (PasswordItem p : passwordItems)
-		{
+		for (PasswordItem p : passwordItems) {
 			clone.passwordItems.add((PasswordItem) p.clone());
 		}
 		
