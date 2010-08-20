@@ -97,10 +97,6 @@ public class PropertyUtils {
 			result = getMethod(clazz, SETTER_PREFIX + StringUtils.capitalize(property), result.getReturnType());
 		}
 		
-		if (result != null && !Modifier.isPublic(result.getModifiers())) {
-			result = null;
-		}
-			
 		return result;
 	}
 	
@@ -109,6 +105,10 @@ public class PropertyUtils {
 		Method result = null;
 		try {
 			result = clazz.getMethod(methodName, params);
+			
+			if (result != null && !Modifier.isPublic(result.getModifiers())) {
+				result = null;
+			}
 		} catch (NoSuchMethodException e) {
 		
 		}
