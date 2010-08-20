@@ -29,8 +29,7 @@ package org.braiden.fpm2.crypto;
 public class FpmCryptoUtils
 {
 	
-	public static byte[] decodeString(String s)
-	{
+	public static byte[] decodeString(String s) {
 		byte[] result = new byte[s.length()/2];
 
 		for (int n = 0; n < s.length() / 2; n++) {
@@ -43,8 +42,7 @@ public class FpmCryptoUtils
 		return result;		
 	}
 
-	public static byte[] unrotate(byte[] data, int blockSizeBytes)
-	{
+	public static byte[] unrotate(byte[] data, int blockSizeBytes) {
 		byte result[] = new byte[data.length];
 		
 		int numBlocks = data.length / blockSizeBytes;
