@@ -49,7 +49,6 @@ public class FpmFileXmlParser {
 	
 	public static FpmFile parse(InputStream is) throws Exception {
 		SAXParserFactory factory = SAXParserFactory.newInstance();
-		//factory.setNamespaceAware(false);
 		SAXParser parser = factory.newSAXParser();
 		FpmFileSaxHandler handler = new FpmFileSaxHandler();
 		parser.parse(is, handler);
