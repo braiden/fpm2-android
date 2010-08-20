@@ -50,11 +50,11 @@ public class JCEDecrypter implements Decrypter {
 	}
 
 	@Override
-	public String decrypt(byte[] key, byte[] encryptedData) throws Exception {
+	public String decrypt(byte[] key, String encryptedData) throws Exception {
 		SecretKey cipherKey = new SecretKeySpec(key, cipher.getAlgorithm());
 
 		cipher.init(Cipher.DECRYPT_MODE, cipherKey);
-		byte[] result = cipher.doFinal(encryptedData);
+		byte[] result = cipher.doFinal(FpmCryptoUtils.decodeString(encryptedData));
 		result = FpmCryptoUtils.unrotate(result, cipher.getBlockSize());
 		int idxOfNil = ArrayUtils.indexOf(result, (byte)0);
 		

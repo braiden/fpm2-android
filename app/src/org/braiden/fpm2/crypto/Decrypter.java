@@ -28,6 +28,6 @@ package org.braiden.fpm2.crypto;
 
 public interface Decrypter {
 
-	String decrypt(byte[] key, byte[] encryptedData) throws Exception;
+	String decrypt(byte[] key, String encryptedData) throws Exception;
 	
 }
