@@ -63,9 +63,9 @@ public class PBKDF2KeyGenerator implements KeyGenerator {
 		
 		for (int count = 1, bytesRemaining = keyLengthBytes; bytesRemaining > 0; count++) {
 			
-			initialHashInput[salt.length + 0] = (byte)(count >> 24);
-			initialHashInput[salt.length + 1] = (byte)(count >> 16);
-			initialHashInput[salt.length + 2] = (byte)(count >> 8);
+			initialHashInput[salt.length + 0] = (byte)(count >>> 24);
+			initialHashInput[salt.length + 1] = (byte)(count >>> 16);
+			initialHashInput[salt.length + 2] = (byte)(count >>> 8);
 			initialHashInput[salt.length + 3] = (byte)(count);
 			
 			hmac.init(key);
