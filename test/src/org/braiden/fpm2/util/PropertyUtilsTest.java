@@ -6,7 +6,6 @@ import java.util.Map.Entry;
 import junit.framework.TestCase;
 
 import org.braiden.fpm2.model.FpmFile;
-import org.braiden.fpm2.model.KeyInfo;
 import org.braiden.fpm2.model.PasswordItem;
 import org.braiden.fpm2.util.PropertyUtils;
 
