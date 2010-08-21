@@ -35,17 +35,17 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.lang.ArrayUtils;
 
-public class JCEDecrypter implements Decrypter {
+public class JCEFpmCipher implements FpmCipher {
 
-	private final static String DEFAULT_CIPHER = "AES/ECB/NoPadding";
+	public final static String DEFAULT_CIPHER = "AES/ECB/NoPadding";
 
 	private Cipher cipher;
 	
-	public JCEDecrypter() throws NoSuchAlgorithmException, NoSuchPaddingException {
+	public JCEFpmCipher() throws NoSuchAlgorithmException, NoSuchPaddingException {
 		this(DEFAULT_CIPHER);
 	}
 	
-	public JCEDecrypter(String cipherName) throws NoSuchAlgorithmException, NoSuchPaddingException {
+	public JCEFpmCipher(String cipherName) throws NoSuchAlgorithmException, NoSuchPaddingException {
 		this.cipher = Cipher.getInstance(cipherName);
 	}
 
@@ -58,7 +58,12 @@ public class JCEDecrypter implements Decrypter {
 		result = FpmCryptoUtils.unrotate(result, cipher.getBlockSize());
 		int idxOfNil = ArrayUtils.indexOf(result, (byte)0);
 		
-		return new String(result, 0, idxOfNil);
+		return new String(result, 0, idxOfNil >= 0 ? idxOfNil : result.length);
 	}
-	
+
+	@Override
+	public String encrypt(byte[] key, String plainText) throws Exception {
+		throw new UnsupportedOperationException();
+	}
+
 }

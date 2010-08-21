@@ -26,8 +26,10 @@ package org.braiden.fpm2.crypto;
  *
  */
 
-public interface KeyGenerator {
+public interface FpmCipher {
 	
-	byte[] generateKey(String secret, byte[] salt) throws Exception;
-
+	String decrypt(byte[] key, String encryptedData) throws Exception;
+	
+	String encrypt(byte[] key, String plainText) throws Exception;
+	
 }

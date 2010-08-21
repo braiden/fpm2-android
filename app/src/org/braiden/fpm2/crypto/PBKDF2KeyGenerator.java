@@ -28,24 +28,18 @@ package org.braiden.fpm2.crypto;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
+import javax.crypto.ShortBufferException;
 import javax.crypto.spec.SecretKeySpec;
 
-public class PBKDF2KeyGenerator implements KeyGenerator {
-
-	private static final int DEFAULT_KEY_LENGTH_BYTES = 32;
-	private static final int DEFAULT_ITERATIONS = 8192;
-	private static final String DEFAULT_HMAC_ALGORITH = "HMACSHA256";
+public class PBKDF2KeyGenerator {
 	
 	private int keyLengthBytes;
 	private int iterations;
 	private Mac hmac;
-	
-	public PBKDF2KeyGenerator() throws NoSuchAlgorithmException {
-		this(DEFAULT_KEY_LENGTH_BYTES, DEFAULT_ITERATIONS, DEFAULT_HMAC_ALGORITH);
-	}
 	
 	public PBKDF2KeyGenerator(int keyLengthBytes, int iterations, String hmacAlgorith) throws NoSuchAlgorithmException	{
 		this.keyLengthBytes = keyLengthBytes;
@@ -53,11 +47,13 @@ public class PBKDF2KeyGenerator implements KeyGenerator {
 		this.hmac = Mac.getInstance(hmacAlgorith);
 	}
 	
-	@Override
-	public byte[] generateKey(String secret, byte[] salt) throws InvalidKeyException {
+	public byte[] generateKey(String secret, byte[] salt) throws InvalidKeyException, ShortBufferException, IllegalStateException {
 		SecretKey key = new SecretKeySpec(secret.getBytes(), hmac.getAlgorithm());
 		byte[] result = new byte[keyLengthBytes];
 		byte[] initialHashInput = new byte[salt.length + 4];
+		byte[] hash1 = new byte[hmac.getMacLength()];
+		byte[] hash2 = new byte[hmac.getMacLength()];
+		byte[] intermediateResult = new byte[hmac.getMacLength()];
 
 		System.arraycopy(salt, 0, initialHashInput, 0, salt.length);
 		
@@ -69,13 +65,14 @@ public class PBKDF2KeyGenerator implements KeyGenerator {
 			initialHashInput[salt.length + 3] = (byte)(count);
 			
 			hmac.init(key);
-			byte[] hash1 = hmac.doFinal(initialHashInput);
-			byte[] intermediateResult = new byte[hash1.length];
+			hmac.update(initialHashInput);
+			hmac.doFinal(hash1, 0);
 			System.arraycopy(hash1, 0, intermediateResult, 0, hash1.length);
 			
 			for (int iter = 1; iter < this.iterations; iter++) {
 				hmac.init(key);
-				byte[] hash2 = hmac.doFinal(hash1);
+				hmac.update(hash1);
+				hmac.doFinal(hash2, 0);
 				System.arraycopy(hash2, 0, hash1, 0, hash2.length);
 				for (int n = 0; n < hash1.length; n++) {
 					intermediateResult[n] ^= hash1[n];
@@ -88,8 +85,20 @@ public class PBKDF2KeyGenerator implements KeyGenerator {
 			bytesRemaining -= intermediateResult.length;
 
 		}
-				
+
 		return result;
+	}
+
+	public int getKeyLengthBytes() {
+		return keyLengthBytes;
+	}
+
+	public int getIterations() {
+		return iterations;
+	}
+
+	public Mac getHmac() {
+		return hmac;
 	}
 	
 }
