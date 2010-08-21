@@ -50,6 +50,7 @@ public class FpmCrypt {
 	
 	public final static String FPM_CIPHER_AES_256 = "AES-256";
 	
+	protected final static String AES_VSTRING_HASH_FUNCTION = "SHA256";	
 	protected final static String TAG = "FpmCrypt";
 	protected final static String PROPERTY_PASSWORD = "password";
 	
@@ -150,7 +151,7 @@ public class FpmCrypt {
 	}
 	
 	protected boolean aesVerifyVstring() throws NoSuchAlgorithmException {
-		MessageDigest digest = MessageDigest.getInstance("SHA256");
+		MessageDigest digest = MessageDigest.getInstance(AES_VSTRING_HASH_FUNCTION);
 		for (PasswordItem item : fpmFile.getPasswordItems()) {
 			StringBuffer input = new StringBuffer();
 			input.append(item.getTitle())
