@@ -91,11 +91,13 @@ public class FpmCrypt {
 	}
 	
 	public void close() {
-		Arrays.fill(key, (byte)0);
-		cipher = null;
-		keyGenerator = null;
-		fpmFile = null;
-		key = null;
+		if (isOpen()) {
+			Arrays.fill(key, (byte)0);
+			cipher = null;
+			keyGenerator = null;
+			fpmFile = null;
+			key = null;
+		}
 	}
 	
 	public String decrypt(String encryptedData) throws Exception {
