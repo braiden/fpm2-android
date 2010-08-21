@@ -2,13 +2,13 @@ package org.braiden.fpm2.crypto;
 
 import junit.framework.TestCase;
 
-public class JCEDecrypterTest extends TestCase {
+public class JCEFpmCipherTest extends TestCase {
 
 	public void testDecrypt() throws Exception {
-		Decrypter d = new JCEDecrypter();
-		KeyGenerator k = new PBKDF2KeyGenerator();
+		FpmCipher d = new JCEFpmCipher();
+		FpmKeyGenerator k = new PBKDF2FpmKeyGenerator();
 		
-		byte[] key = k.generateKey("secret", "lmfloihibngmffko".getBytes());
+		byte[] key = k.generateKey("secret", "lmfloihibngmffkopbaobogkaamdddao");
 		String encryptedData = "clkpkceijlnlicakdnkjfmnempafacapcdcfpgjcmfnkifkicnlhmgnjgcbabmdgneodljhllcdkngfmleipbboncnjdbbaijbhnbibojcnpeogbfelegoffchjjegpcebbfodhlepnliklhgdgmbfllfdldadlbjkklkmhhhhdpndcpgaljfabkgcnaafblpbdnbdofaakadffbolcfghohjpknfoimgehoehllijcahdjdacbhodnomonhkedognmimnpmmncaodelhnadmejcialembkoimgnglkhffkpgelcimajbmkibhiloeibnaphjjhndmganiocendcibcmcnlolpgfpdfihdbocfmbicjgggicgceliglmpignllmfjdfcoknegjfgjepbfbofngfpplmifdfnaidjlhdifandhabhlbnbkijcffmlpdofjkdbhkikflaafbeadjhidpeokjnaipaidnigkgafojjnppjpbhbgponiebhc";
 		String result = d.decrypt(key, encryptedData);
 		assertEquals("password", result);

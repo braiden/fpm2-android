@@ -29,10 +29,10 @@ public class PBKDF2KeyGeneratorTest extends TestCase {
 	public void testHmacSha256() throws Exception
 	{
 		String salt = "kohamnllcnepbdnk";
-		PBKDF2KeyGenerator keyGenerator = new PBKDF2KeyGenerator();
+		PBKDF2KeyGenerator keyGenerator = new PBKDF2KeyGenerator(32, 256, "HMACSHA256");
 		byte[] key = keyGenerator.generateKey("secret", salt.getBytes());
 		assertEquals(
-				"3dc7fa34fa2aa5cab9e1c00f75f1c7e39e20cbd12446c8d07cbd3de7568e7683",
+				"cee31b0069c1720f1af039b602231e3885b082598829d38991dfa7b871394a17",
 				encodeHexString(key));
 	}
 	
