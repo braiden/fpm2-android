@@ -1,6 +1,6 @@
 package org.braiden.fpm2.xml;
 
-/**
+/*
  * Copyright (c) 2010 Braiden Kindt
  *
  * Permission is hereby granted, free of charge, to any person
