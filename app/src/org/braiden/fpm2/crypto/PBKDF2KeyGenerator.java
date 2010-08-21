@@ -86,6 +86,11 @@ public class PBKDF2KeyGenerator {
 
 		}
 
+		Arrays.fill(hash1, (byte)0);
+		Arrays.fill(hash2, (byte)0);
+		Arrays.fill(intermediateResult, (byte)0);
+		Arrays.fill(initialHashInput, (byte)0);
+		
 		return result;
 	}
 
