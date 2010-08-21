@@ -26,11 +26,8 @@ package org.braiden.fpm2.xml;
  *
  */
 
+import java.io.IOException;
 import java.io.InputStream;
-
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 
 import org.braiden.fpm2.model.FpmFile;
 import org.braiden.fpm2.model.DataObject;
@@ -49,7 +46,7 @@ public class FpmFileXmlParser {
 
 	private static final String TAG = "FpmXmlParser";
 	
-	public static FpmFile parse(InputStream is) throws Exception {
+	public static FpmFile parse(InputStream is) throws IOException, SAXException {
 		FpmFileSaxHandler handler = new FpmFileSaxHandler();
 		Xml.parse(is, Xml.Encoding.UTF_8, handler);
 		return handler.getFpmFile();
