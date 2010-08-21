@@ -7,24 +7,13 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 import org.braiden.fpm2.crypto.PBKDF2KeyGenerator;
+import org.braiden.fpm2.util.Hex;
 
 import android.util.Log;
 
 import junit.framework.TestCase;
 
 public class PBKDF2KeyGeneratorTest extends TestCase {
-	
-    private static final char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-	
-    private static String encodeHexString(byte[] data) {
-        int l = data.length;
-        char[] out = new char[l << 1];
-        for (int i = 0, j = 0; i < l; i++) {
-            out[j++] = HEX_DIGITS[(0xF0 & data[i]) >>> 4];
-            out[j++] = HEX_DIGITS[0x0F & data[i]];
-        }
-        return new String(out);
-    }
 	
 	public void testHmacSha256() throws Exception
 	{
@@ -33,7 +22,7 @@ public class PBKDF2KeyGeneratorTest extends TestCase {
 		byte[] key = keyGenerator.generateKey("secret", salt.getBytes());
 		assertEquals(
 				"cee31b0069c1720f1af039b602231e3885b082598829d38991dfa7b871394a17",
-				encodeHexString(key));
+				Hex.encodeHexString(key));
 	}
 	
 	public void testHmacSha1() throws Exception
@@ -57,7 +46,7 @@ public class PBKDF2KeyGeneratorTest extends TestCase {
 			byte[] javaKey = javaSecretKey.getEncoded();
 			PBKDF2KeyGenerator myKeyGenerator = new PBKDF2KeyGenerator(keySpec.getKeyLength() / 8, keySpec.getIterationCount(), "HmacSHA1");
 			byte[] myKey = myKeyGenerator.generateKey(new String(keySpec.getPassword()), keySpec.getSalt());
-			assertEquals(encodeHexString(javaKey), encodeHexString(myKey));
+			assertEquals(Hex.encodeHexString(javaKey), Hex.encodeHexString(myKey));
 		}
 	}
 	
