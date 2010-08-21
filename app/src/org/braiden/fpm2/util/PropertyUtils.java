@@ -29,12 +29,15 @@ package org.braiden.fpm2.util;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 
 public class PropertyUtils {
 
+	private static final String METHOD_GET_CLASS = "getClass";
 	private static final String GETTER_PREFIX = "get";
 	private static final String GETTER_BOOLEAN_PREFIX = "is";
 	private static final String SETTER_PREFIX = "set";
@@ -100,8 +103,7 @@ public class PropertyUtils {
 		return result;
 	}
 	
-	private static Method getMethod(Class<?> clazz, String methodName, Class<?>... params)
-	{
+	private static Method getMethod(Class<?> clazz, String methodName, Class<?>... params) {
 		Method result = null;
 		try {
 			result = clazz.getMethod(methodName, params);
@@ -112,6 +114,36 @@ public class PropertyUtils {
 		} catch (NoSuchMethodException e) {
 		
 		}
+		return result;
+	}
+	
+	public static Map<String, Object> describe(Object bean) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		Validate.notNull(bean);
+		
+		Map<String, Object> result = new HashMap<String, Object>();
+		
+		for (Method method : bean.getClass().getMethods()) {
+			boolean isAccepted = Modifier.isPublic(method.getModifiers()) 
+					&& !Modifier.isStatic(method.getModifiers())
+					&& method.getParameterTypes().length == 0
+					&& !METHOD_GET_CLASS.equals(method.getName());
+			
+			boolean isObjGetter = isAccepted && !Void.class.isAssignableFrom(method.getReturnType())
+					&& method.getName().startsWith(GETTER_PREFIX);
+			boolean isBooleanGetter = isAccepted && (Boolean.class.isAssignableFrom(method.getReturnType())
+					|| boolean.class.isAssignableFrom(method.getReturnType()))
+					&& method.getName().startsWith(GETTER_BOOLEAN_PREFIX);
+			
+			if (isObjGetter || isBooleanGetter)
+			{
+				String propName = StringUtils.uncapitalize(
+						isObjGetter
+							? method.getName().substring(GETTER_PREFIX.length())
+							: method.getName().substring(GETTER_BOOLEAN_PREFIX.length()));
+				result.put(propName, method.invoke(bean));
+			}
+		}
+		
 		return result;
 	}
 	

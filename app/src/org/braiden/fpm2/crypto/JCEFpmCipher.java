@@ -48,16 +48,19 @@ public class JCEFpmCipher implements FpmCipher {
 	public JCEFpmCipher(String cipherName) throws NoSuchAlgorithmException, NoSuchPaddingException {
 		this.cipher = Cipher.getInstance(cipherName);
 	}
+	
+	@Override
+	public byte[] decryptRaw(byte[] key, String encryptedData) throws Exception {
+		SecretKey cipherKey = new SecretKeySpec(key, cipher.getAlgorithm());
+		cipher.init(Cipher.DECRYPT_MODE, cipherKey);
+		byte[] result = cipher.doFinal(FpmCryptoUtils.decodeString(encryptedData));
+		return FpmCryptoUtils.unrotate(result, cipher.getBlockSize());
+	}
 
 	@Override
 	public String decrypt(byte[] key, String encryptedData) throws Exception {
-		SecretKey cipherKey = new SecretKeySpec(key, cipher.getAlgorithm());
-
-		cipher.init(Cipher.DECRYPT_MODE, cipherKey);
-		byte[] result = cipher.doFinal(FpmCryptoUtils.decodeString(encryptedData));
-		result = FpmCryptoUtils.unrotate(result, cipher.getBlockSize());
+		byte[] result = decryptRaw(key, encryptedData);
 		int idxOfNil = ArrayUtils.indexOf(result, (byte)0);
-		
 		return new String(result, 0, idxOfNil >= 0 ? idxOfNil : result.length);
 	}
 
@@ -66,4 +69,10 @@ public class JCEFpmCipher implements FpmCipher {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	public String encryptRaw(byte[] key, byte[] clear) throws Exception {
+		throw new UnsupportedOperationException();
+	}
+
+	
 }

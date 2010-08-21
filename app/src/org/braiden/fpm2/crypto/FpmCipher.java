@@ -30,6 +30,10 @@ public interface FpmCipher {
 	
 	String decrypt(byte[] key, String encryptedData) throws Exception;
 	
+	byte[] decryptRaw(byte[] key, String encryptedData) throws Exception;
+	
 	String encrypt(byte[] key, String plainText) throws Exception;
+	
+	String encryptRaw(byte[] key, byte clear[]) throws Exception;
 	
 }
