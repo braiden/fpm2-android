@@ -23,7 +23,7 @@ public class FpmApplication extends Application {
 
 	public static final String ACTION_FPM_OPEN = "org.braiden.fpm2.FPM_OPEN";
 	public static final String ACTION_FPM_CLOSE = "org.braiden.fpm2.FPM_CLOSE";
-	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
+	public static final long FPM_AUTO_LOCK_MILLISECONDS = 10L * 1000L;
 	
 	private static final String TAG = "FpmApplication";
 	private FpmCrypt fpmCrypt;
@@ -94,7 +94,7 @@ public class FpmApplication extends Application {
 	
 	public PasswordItem getPasswordItemById(long id) {
 		List<PasswordItem> items = getPasswordItems();
-		if (id > items.size()) {
+		if (id >= items.size()) {
 			return null;
 		} else {
 			return items.get((int) id);

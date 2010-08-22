@@ -30,7 +30,9 @@ import org.braiden.fpm2.model.PasswordItem;
 import org.braiden.fpm2.util.PropertyUtils;
 
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -43,17 +45,24 @@ public class ViewPasswordItemActivity extends ListActivity {
 
 	protected final static String TAG = "ViewPasswordItemActivity";
 	
-	private PasswordItem item;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);		
+		super.onCreate(savedInstanceState);
+		
 		FpmApplication app = (FpmApplication) this.getApplication();
 		app.openCrypt(this);
-		item = (PasswordItem) app.getPasswordItemById((int)getIntent().getLongExtra("id", -1L));
-		String title = getResources().getString(R.string.app_name) + " - " + item.getTitle();
-		this.setTitle(title);
-		this.setListAdapter(new PasswordItemPropertyListAdapter(this, item));
+		long id = getIntent().getLongExtra("id", -1L);
+		String title = getIntent().getStringExtra("title");
+		BaseAdapter adapter = new PasswordItemPropertyListAdapter(this, app, id);
+		this.setTitle(getResources().getString(R.string.app_name) + " - " + title);
+		this.setListAdapter(adapter);
+		
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(FpmApplication.ACTION_FPM_CLOSE);
+		filter.addAction(FpmApplication.ACTION_FPM_OPEN);
+		BroadcastReceiver receiver = new PasswordItemListActivity.FpmCryptBroadcastReceiver(this, adapter);
+		registerReceiver(receiver, filter);
 	}
 
 	public static class PasswordItemPropertyListAdapter extends BaseAdapter {
@@ -83,11 +92,13 @@ public class ViewPasswordItemActivity extends ListActivity {
 		};
 		
 		private LayoutInflater layoutInflater;
-		private PasswordItem passwordItem;
+		private long passwordItemId;
+		private FpmApplication app;
 		
-		public PasswordItemPropertyListAdapter(Context context, PasswordItem passwordItem) {
-			layoutInflater = LayoutInflater.from(context);
-			this.passwordItem = passwordItem;
+		public PasswordItemPropertyListAdapter(Context context, FpmApplication app, long passwordItemId) {
+			this.layoutInflater = LayoutInflater.from(context);
+			this.passwordItemId = passwordItemId;
+			this.app = app;
 		}
 		
 		@Override
@@ -107,6 +118,8 @@ public class ViewPasswordItemActivity extends ListActivity {
 		
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
+			PasswordItem passwordItem = app.getPasswordItemById(this.passwordItemId);
+			
 			ViewHolder viewHolder = null;
 			
 			if (convertView == null) {
@@ -121,7 +134,9 @@ public class ViewPasswordItemActivity extends ListActivity {
 			
 			viewHolder.key.setText(TITLES[position]);
 			try {
-				if (position != POSITION_OF_PASSWORD) {
+				if (passwordItem == null) {
+					viewHolder.value.setText("????????");
+				} if (position != POSITION_OF_PASSWORD) {
 					viewHolder.value.setText("" + PropertyUtils.getProperty(passwordItem, PROPERTIES[position]));
 				} else {
 					viewHolder.value.setText("********");

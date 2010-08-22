@@ -70,6 +70,7 @@ public class PasswordItemListActivity extends ListActivity {
 	protected void onListItemClick(ListView listView, View view, int position, long id) {
     	Intent intent = new Intent(this, ViewPasswordItemActivity.class);
     	intent.putExtra("id", id);
+    	intent.putExtra("title", ((PasswordItem) listView.getItemAtPosition(position)).getTitle());
     	startActivity(intent);
 	}
 
