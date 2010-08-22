@@ -31,10 +31,8 @@ import org.braiden.fpm2.util.Hex;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -43,7 +41,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.RemoteViews.ActionException;
 
 public class PasswordItemListActivity extends ListActivity {
 	
@@ -113,19 +110,22 @@ public class PasswordItemListActivity extends ListActivity {
 			if (convertView == null) {
 				viewHolder = new ViewHolder(); 
 				convertView = layoutInflater.inflate(R.layout.password_item_row, null);
-				viewHolder.title = (TextView) convertView.findViewById(R.id.passwordItemTitle);
+				viewHolder.title = (TextView) convertView.findViewById(R.id.passwordItemRowTitle);
+				viewHolder.url = (TextView) convertView.findViewById(R.id.passwordItemRowUrl);
 				convertView.setTag(viewHolder);
 			} else {
 				viewHolder = (ViewHolder) convertView.getTag();
 			}
 			
 			viewHolder.title.setText(item.getTitle());
+			viewHolder.url.setText(item.getUrl());
 
 			return convertView;
 		}
 
 		private static class ViewHolder {
 			public TextView title;
+			public TextView url;
 		}
 		
     }

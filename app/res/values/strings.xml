@@ -2,4 +2,14 @@
 <resources>
     
     <string name="app_name">FPM2Droid</string>
+    
+    <string name="password_item_title">Title</string>
+    <string name="password_item_url">URL / Arg</string>
+    <string name="password_item_username">User Name</string>
+    <string name="password_item_password">Password</string>
+    <string name="password_item_category">Category</string>
+    <string name="password_item_default">Default?</string>
+    <string name="password_item_notes">Notes</string>
+    <string name="password_item_launcher">Launcher</string>
+    
 </resources>
