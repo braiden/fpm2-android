@@ -57,7 +57,7 @@ public class FpmCrypt {
 	private FpmCipher cipher;
 	private FpmKeyGenerator keyGenerator;
 	private FpmFile fpmFile;
-	private byte[] key;
+	volatile private byte[] key;
 	
 	public void open(InputStream inputStream, String password) throws Exception {
 		try {

@@ -30,7 +30,10 @@ import org.braiden.fpm2.model.PasswordItem;
 
 import android.app.Activity;
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,7 +50,13 @@ public class PasswordItemListActivity extends ListActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
-    	setListAdapter(new FpmFileListAdapter(this));
+    	BaseAdapter adapter = new FpmCryptListAdapter(this);
+    	setListAdapter(adapter);
+    	BroadcastReceiver receiver = new FpmCryptBroadcastReceiver(this, adapter);
+    	IntentFilter filter = new IntentFilter();
+    	filter.addAction(FpmApplication.ACTION_FPM_CLOSE);
+    	filter.addAction(FpmApplication.ACTION_FPM_OPEN);
+    	registerReceiver(receiver, filter);
     }
     
     @Override
@@ -64,12 +73,32 @@ public class PasswordItemListActivity extends ListActivity {
     	startActivity(intent);
 	}
 
-	public static class FpmFileListAdapter extends BaseAdapter {
+	public static class FpmCryptBroadcastReceiver extends BroadcastReceiver {
+
+		private Activity activity;
+		private BaseAdapter listAdapter;
+		
+		public FpmCryptBroadcastReceiver(Activity activity, BaseAdapter listAdapter) {
+			this.listAdapter = listAdapter;
+			this.activity = activity;
+		}
+		
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			listAdapter.notifyDataSetChanged();
+			if (activity.hasWindowFocus()) {
+				((FpmApplication) activity.getApplication()).openCrypt(activity);
+			}
+		}
+		
+	}
+	
+	public static class FpmCryptListAdapter extends BaseAdapter {
     	
     	LayoutInflater layoutInflater;
     	FpmApplication app;
     	
-    	public FpmFileListAdapter(Activity activity) {
+    	public FpmCryptListAdapter(Activity activity) {
     		layoutInflater = LayoutInflater.from(activity);
     		app = (FpmApplication) activity.getApplication();
     	}

@@ -8,8 +8,11 @@ import org.braiden.fpm2.model.PasswordItem;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +21,10 @@ import android.widget.EditText;
 
 public class FpmApplication extends Application {
 
+	public static final String ACTION_FPM_OPEN = "org.braiden.fpm2.FPM_OPEN";
+	public static final String ACTION_FPM_CLOSE = "org.braiden.fpm2.FPM_CLOSE";
+	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
+	
 	private static final String TAG = "FpmApplication";
 	private FpmCrypt fpmCrypt;
 
@@ -25,6 +32,11 @@ public class FpmApplication extends Application {
 	public void onCreate() {
 		super.onCreate();
 		fpmCrypt = new FpmCrypt();
+		BroadcastReceiver autoCloseReceiver = new AutoCloseFpmBroadcastReceiver(this, fpmCrypt);
+		IntentFilter filter = new IntentFilter();
+		filter.addAction(ACTION_FPM_CLOSE);
+		filter.addAction(ACTION_FPM_OPEN);
+		registerReceiver(autoCloseReceiver, filter);
 	}
 	
 	public void openCrypt(final Activity activity) {
@@ -45,6 +57,7 @@ public class FpmApplication extends Application {
 							FpmApplication.this.fpmCrypt.open(
 									activity.getAssets().open("fpm.xml"),
 									editText.getText().toString());
+							activity.sendBroadcast(new Intent(ACTION_FPM_OPEN));
 						} catch (Exception e) {
 							Log.w(TAG, "Failed to unlock FPM.", e);
 							vib.vibrate(250L);
@@ -60,7 +73,11 @@ public class FpmApplication extends Application {
             	})
             	.create()
             	.show();
-		}
+		}		
+	}
+	
+	public void closeCrypt() {
+		fpmCrypt.close();
 	}
 	
 	public boolean isCryptOpen() {
@@ -82,6 +99,46 @@ public class FpmApplication extends Application {
 		} else {
 			return items.get((int) id);
 		}
+	}
+	
+	public static class AutoCloseFpmBroadcastReceiver extends BroadcastReceiver {
+
+		Thread autoCloseThread = null;
+		FpmCrypt fpmCrypt;
+		Context ctx;
+		
+		public AutoCloseFpmBroadcastReceiver(Context ctx, FpmCrypt crypt) {
+			this.fpmCrypt = crypt;
+			this.ctx = ctx;
+		}
+		
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (ACTION_FPM_OPEN.equals(intent.getAction())) {
+				if (autoCloseThread == null || !autoCloseThread.isAlive()) {
+					autoCloseThread = new Thread() {
+						@Override
+						public void run() {
+							try {
+								Thread.sleep(FPM_AUTO_LOCK_MILLISECONDS);
+								fpmCrypt.close();
+								Intent intent = new Intent(ACTION_FPM_CLOSE);
+								ctx.sendBroadcast(intent);
+							} catch (InterruptedException e) {
+								
+							}
+						}
+					};
+					autoCloseThread.start();
+				}
+			} else if (ACTION_FPM_CLOSE.equals(intent.getAction())) {
+				if (autoCloseThread != null && autoCloseThread.isAlive()) {
+					autoCloseThread.interrupt();
+					autoCloseThread = null;
+				}
+			}
+		}
+		
 	}
 	
 }
