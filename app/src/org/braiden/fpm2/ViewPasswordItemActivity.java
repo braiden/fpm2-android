@@ -86,10 +86,12 @@ public class ViewPasswordItemActivity extends ListActivity {
 		if (position == PasswordItemPropertyListAdapter.POSITION_OF_PASSWORD) {
 			FpmApplication app = ((FpmApplication) getApplication());
 			PasswordItem item = app.getPasswordItemById(this.id);
-			String password = app.decrypt(item.getPassword());
-			if (password != null) {
-				TextView text = (TextView) v.findViewById(R.id.passwordItemPropertyRowValue);
-				text.setText(password);
+			if (item != null) {
+				String password = app.decrypt(item.getPassword());
+				if (password != null) {
+					TextView text = (TextView) v.findViewById(R.id.passwordItemPropertyRowValue);
+					text.setText(password);
+				}
 			}
 		}
 	}
