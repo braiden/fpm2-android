@@ -45,6 +45,7 @@ public class ViewPasswordItemActivity extends ListActivity {
 
 	protected final static String TAG = "ViewPasswordItemActivity";
 	
+	private BroadcastReceiver fpmCryptReceiver;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -61,8 +62,14 @@ public class ViewPasswordItemActivity extends ListActivity {
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(FpmApplication.ACTION_FPM_CLOSE);
 		filter.addAction(FpmApplication.ACTION_FPM_OPEN);
-		BroadcastReceiver receiver = new PasswordItemListActivity.FpmCryptBroadcastReceiver(this, adapter);
-		registerReceiver(receiver, filter);
+		fpmCryptReceiver = new PasswordItemListActivity.FpmCryptBroadcastReceiver(this, adapter);
+		registerReceiver(fpmCryptReceiver, filter);
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		unregisterReceiver(fpmCryptReceiver);
 	}
 
 	public static class PasswordItemPropertyListAdapter extends BaseAdapter {

@@ -39,8 +39,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Vibrator;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -50,28 +48,33 @@ public class FpmApplication extends Application {
 	public static final String ACTION_FPM_OPEN = "org.braiden.fpm2.FPM_OPEN";
 	public static final String ACTION_FPM_CLOSE = "org.braiden.fpm2.FPM_CLOSE";
 	
-	public static final long FPM_AUTO_LOCK_MILLISECONDS = 5L * 1000L;
+	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
 	
-	private static final String TAG = "FpmApplication";
 	private FpmCrypt fpmCrypt;
+	private BroadcastReceiver autoCloseReceiver;
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		fpmCrypt = new FpmCrypt();
-		BroadcastReceiver autoCloseReceiver = new AutoCloseFpmBroadcastReceiver(this, fpmCrypt);
+		autoCloseReceiver = new AutoCloseFpmBroadcastReceiver(this, fpmCrypt);
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(ACTION_FPM_CLOSE);
 		filter.addAction(ACTION_FPM_OPEN);
 		registerReceiver(autoCloseReceiver, filter);
 	}
 	
+	@Override
+	public void onTerminate() {
+		super.onTerminate();
+		unregisterReceiver(autoCloseReceiver);
+	}
+
 	public void openCrypt(final Activity activity) {
 		if (!isCryptOpen()) {
 			LayoutInflater factory = LayoutInflater.from(activity);
 			final View textEntryView = factory.inflate(R.layout.passphrase_dialog, null);
 			final EditText editText = (EditText) textEntryView.findViewById(R.id.password_edit);
-			final Vibrator vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 			new AlertDialog.Builder(activity)
             	.setTitle(R.string.passphrase_dialog_title)
             	.setView(textEntryView)
@@ -79,16 +82,10 @@ public class FpmApplication extends Application {
             	.setPositiveButton(R.string.passphrase_dialog_ok, new DialogInterface.OnClickListener() {
             		@Override
             		public void onClick(DialogInterface dialog, int whichButton) {
-            			try {
-							FpmApplication.this.fpmCrypt.open(
-									activity.getAssets().open("fpm.xml"),
-									editText.getText().toString());
-							activity.sendBroadcast(new Intent(ACTION_FPM_OPEN));
-						} catch (Exception e) {
-							Log.w(TAG, "Failed to unlock FPM.", e);
-							vib.vibrate(250L);
-							openCrypt(activity);
-						}
+           				Intent intent = new Intent(activity, FpmUnlockService.class);
+           				intent.putExtra("passphrase", editText.getText().toString());
+           				dialog.dismiss();
+           				startService(intent);
             		}
             	})
             	.setNegativeButton(R.string.passphrase_dialog_cancel, new DialogInterface.OnClickListener() {
@@ -109,6 +106,12 @@ public class FpmApplication extends Application {
 	
 	public boolean isCryptOpen() {
 		return fpmCrypt.isOpen();
+	}
+	
+	public void unlock(String passphrase) throws Exception {
+		FpmApplication.this.fpmCrypt.open(
+				getAssets().open("fpm.xml"),
+				passphrase);
 	}
 
 	public List<PasswordItem> getPasswordItems() {

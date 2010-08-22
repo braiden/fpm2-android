@@ -46,20 +46,28 @@ public class PasswordItemListActivity extends ListActivity {
 	
 	protected final static String TAG = "PasswordListActivity";
 	
+	private BroadcastReceiver fpmCryptReceiver;
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
     	BaseAdapter adapter = new FpmCryptListAdapter(this);
     	setListAdapter(adapter);
-    	BroadcastReceiver receiver = new FpmCryptBroadcastReceiver(this, adapter);
+    	fpmCryptReceiver = new FpmCryptBroadcastReceiver(this, adapter);
     	IntentFilter filter = new IntentFilter();
     	filter.addAction(FpmApplication.ACTION_FPM_CLOSE);
     	filter.addAction(FpmApplication.ACTION_FPM_OPEN);
-    	registerReceiver(receiver, filter);
+    	registerReceiver(fpmCryptReceiver, filter);
     }
-    
-    @Override
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		unregisterReceiver(fpmCryptReceiver);
+	}
+
+	@Override
     protected void onResume() {
     	FpmApplication app = (FpmApplication) this.getApplication();
     	app.openCrypt(this);
