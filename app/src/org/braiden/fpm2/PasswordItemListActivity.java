@@ -71,7 +71,14 @@ public class PasswordItemListActivity extends ListActivity {
     	Intent intent = new Intent(this, ViewPasswordItemActivity.class);
     	intent.putExtra("id", id);
     	intent.putExtra("title", ((PasswordItem) listView.getItemAtPosition(position)).getTitle());
-    	startActivity(intent);
+    	startActivityForResult(intent, 0);
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (resultCode < 0) {
+			finish();
+		}
 	}
 
 	public static class FpmCryptBroadcastReceiver extends BroadcastReceiver {

@@ -1,5 +1,31 @@
 package org.braiden.fpm2;
 
+/*
+ * Copyright (c) 2010 Braiden Kindt
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *  OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
 import java.util.Collections;
 import java.util.List;
 
@@ -23,7 +49,8 @@ public class FpmApplication extends Application {
 
 	public static final String ACTION_FPM_OPEN = "org.braiden.fpm2.FPM_OPEN";
 	public static final String ACTION_FPM_CLOSE = "org.braiden.fpm2.FPM_CLOSE";
-	public static final long FPM_AUTO_LOCK_MILLISECONDS = 10L * 1000L;
+	
+	public static final long FPM_AUTO_LOCK_MILLISECONDS = 5L * 1000L;
 	
 	private static final String TAG = "FpmApplication";
 	private FpmCrypt fpmCrypt;
@@ -46,7 +73,6 @@ public class FpmApplication extends Application {
 			final EditText editText = (EditText) textEntryView.findViewById(R.id.password_edit);
 			final Vibrator vib = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 			new AlertDialog.Builder(activity)
-            	//.setIcon(R.drawable.passphrase_dialog_icon)
             	.setTitle(R.string.passphrase_dialog_title)
             	.setView(textEntryView)
             	.setCancelable(false)
@@ -68,6 +94,7 @@ public class FpmApplication extends Application {
             	.setNegativeButton(R.string.passphrase_dialog_cancel, new DialogInterface.OnClickListener() {
             		@Override
             		public void onClick(DialogInterface dialog, int which) {
+            			activity.setResult(-1);
             			activity.finish();
             		}
             	})
