@@ -69,6 +69,14 @@ public class FpmCrypt {
 	}
 	
 	public void open(InputStream inputStream, String password) throws Exception {
+		open(inputStream, password, null);
+	}
+	
+	public void open(InputStream inputStream, byte[] key) throws Exception {
+		open(inputStream, null, key);
+	}
+	
+	public void open(InputStream inputStream, String password, byte[] key) throws Exception {
 		try {
 			fpmFile = FpmFileXmlParser.parse(inputStream);
 			cipher = createCipher(fpmFile);
@@ -76,7 +84,11 @@ public class FpmCrypt {
 			if (cipher == null || keyGenerator == null) {
 				throw new Exception("FPM Cipher \"" + fpmFile.getKeyInfo().getCipher() + "\" is not supported.");
 			}
-			key = keyGenerator.generateKey(password, fpmFile.getKeyInfo().getSalt());
+			if (key == null) {
+				this.key = keyGenerator.generateKey(password, fpmFile.getKeyInfo().getSalt());
+			} else {
+				this.key = key;
+			}
 			decryptAll();
 			if (!verifyVstring()) {
 				throw new Exception("Password invalid.");
