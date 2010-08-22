@@ -26,6 +26,7 @@ package org.braiden.fpm2;
  *
  */
 
+import java.io.FileInputStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -113,7 +114,7 @@ public class FpmApplication extends Application {
 	
 	public void unlock(String passphrase) throws Exception {
 		FpmApplication.this.fpmCrypt.open(
-				getAssets().open("fpm.xml"),
+				new FileInputStream("/sdcard/fpm"),
 				passphrase);
 	}
 
