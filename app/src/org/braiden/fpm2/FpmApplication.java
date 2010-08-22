@@ -39,6 +39,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
@@ -49,6 +50,8 @@ public class FpmApplication extends Application {
 	public static final String ACTION_FPM_CLOSE = "org.braiden.fpm2.FPM_CLOSE";
 	
 	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
+	
+	protected static final String TAG = "FpmApplication";
 	
 	private FpmCrypt fpmCrypt;
 	private BroadcastReceiver autoCloseReceiver;
@@ -114,6 +117,19 @@ public class FpmApplication extends Application {
 				passphrase);
 	}
 
+	public String decrypt(String s) {
+		if (isCryptOpen()) {
+			try {
+				return fpmCrypt.decrypt(s);
+			} catch (Exception e) {
+				Log.w(TAG, "Failed to decrypt String.", e);
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
 	public List<PasswordItem> getPasswordItems() {
 		if (isCryptOpen()) {
 			return fpmCrypt.getFpmFile().getPasswordItems();

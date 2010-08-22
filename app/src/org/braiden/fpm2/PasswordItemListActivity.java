@@ -52,9 +52,11 @@ public class PasswordItemListActivity extends ListActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
+    	
     	BaseAdapter adapter = new FpmCryptListAdapter(this);
     	setListAdapter(adapter);
-    	fpmCryptReceiver = new FpmCryptBroadcastReceiver(this, adapter);
+    	
+    	fpmCryptReceiver = new FpmCryptBroadcastReceiver(this, adapter);    	
     	IntentFilter filter = new IntentFilter();
     	filter.addAction(FpmApplication.ACTION_FPM_CLOSE);
     	filter.addAction(FpmApplication.ACTION_FPM_OPEN);
@@ -69,9 +71,9 @@ public class PasswordItemListActivity extends ListActivity {
 
 	@Override
     protected void onResume() {
+		super.onResume();
     	FpmApplication app = (FpmApplication) this.getApplication();
     	app.openCrypt(this);
-    	super.onResume();
     }
     
 	@Override

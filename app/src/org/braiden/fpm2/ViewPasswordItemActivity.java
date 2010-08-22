@@ -39,12 +39,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 public class ViewPasswordItemActivity extends ListActivity {
 
 	protected final static String TAG = "ViewPasswordItemActivity";
 	
+	private long id;
 	private BroadcastReceiver fpmCryptReceiver;
 	
 	@Override
@@ -52,8 +54,7 @@ public class ViewPasswordItemActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		
 		FpmApplication app = (FpmApplication) this.getApplication();
-		app.openCrypt(this);
-		long id = getIntent().getLongExtra("id", -1L);
+		this.id = getIntent().getLongExtra("id", -1L);
 		String title = getIntent().getStringExtra("title");
 		BaseAdapter adapter = new PasswordItemPropertyListAdapter(this, app, id);
 		this.setTitle(getResources().getString(R.string.app_name) + " - " + title);
@@ -65,6 +66,13 @@ public class ViewPasswordItemActivity extends ListActivity {
 		fpmCryptReceiver = new PasswordItemListActivity.FpmCryptBroadcastReceiver(this, adapter);
 		registerReceiver(fpmCryptReceiver, filter);
 	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		FpmApplication app = (FpmApplication) this.getApplication();
+		app.openCrypt(this);
+	}
 
 	@Override
 	protected void onDestroy() {
@@ -72,9 +80,23 @@ public class ViewPasswordItemActivity extends ListActivity {
 		unregisterReceiver(fpmCryptReceiver);
 	}
 
+	@Override
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+		super.onListItemClick(l, v, position, id);
+		if (position == PasswordItemPropertyListAdapter.POSITION_OF_PASSWORD) {
+			FpmApplication app = ((FpmApplication) getApplication());
+			PasswordItem item = app.getPasswordItemById(this.id);
+			String password = app.decrypt(item.getPassword());
+			if (password != null) {
+				TextView text = (TextView) v.findViewById(R.id.passwordItemPropertyRowValue);
+				text.setText(password);
+			}
+		}
+	}
+
 	public static class PasswordItemPropertyListAdapter extends BaseAdapter {
 		
-		private static final int POSITION_OF_PASSWORD = 3;
+		public static final int POSITION_OF_PASSWORD = 3;
 		
 		private static final  int[] TITLES = {
 			R.string.password_item_title,
