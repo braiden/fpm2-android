@@ -12,4 +12,9 @@
     <string name="password_item_notes">Notes</string>
     <string name="password_item_launcher">Launcher</string>
     
+    <string name="passphrase_dialog_passphrase">Passphrase:</string>
+    <string name="passphrase_dialog_title">Unlock FPM2 Database</string>
+    <string name="passphrase_dialog_ok">OK</string>
+    <string name="passphrase_dialog_cancel">Cancel</string>
+    
 </resources>

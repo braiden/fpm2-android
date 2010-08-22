@@ -47,8 +47,9 @@ public class ViewPasswordItemActivity extends ListActivity {
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		item = (PasswordItem) FpmCrypt.getInstance().getFpmFile().getPasswordItems().get((int)getIntent().getLongExtra("id", -1L));
+		super.onCreate(savedInstanceState);		
+		FpmApplication app = (FpmApplication) this.getApplication();
+		item = (PasswordItem) app.getPasswordItemById((int)getIntent().getLongExtra("id", -1L));
 		String title = getResources().getString(R.string.app_name) + " - " + item.getTitle();
 		this.setTitle(title);
 		this.setListAdapter(new PasswordItemPropertyListAdapter(this, item));

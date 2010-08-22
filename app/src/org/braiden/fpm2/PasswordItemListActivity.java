@@ -27,14 +27,11 @@ package org.braiden.fpm2;
  */
 
 import org.braiden.fpm2.model.PasswordItem;
-import org.braiden.fpm2.util.Hex;
 
-import android.app.AlertDialog;
+import android.app.Activity;
 import android.app.ListActivity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -49,28 +46,18 @@ public class PasswordItemListActivity extends ListActivity {
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-    	initFpmCrypt();
-    	if (!FpmCrypt.getInstance().isOpen()) {
-    		new AlertDialog.Builder(this)
-    			.setMessage("Failed to open FpmCrypt.")
-    			.create()
-    			.show();
-    	}
+    	super.onCreate(savedInstanceState);
     	setListAdapter(new FpmFileListAdapter(this));
-        super.onCreate(savedInstanceState);
     }
     
-    private void initFpmCrypt() {
-    	try {
-			FpmCrypt.getInstance().open(
-					getAssets().open("fpm.xml"),
-					Hex.decodeHex("e9275c4bd60c2dbabb98b7d822e6f0d123e99ad1c7d3b22e37c9fd49843afa15"));
-		} catch (Exception e) {
-			Log.w(TAG, "Failed to init FpmCrypt.", e);
-		}
-    }
-
     @Override
+    protected void onResume() {
+    	FpmApplication app = (FpmApplication) this.getApplication();
+    	app.openCrypt(this);
+    	super.onResume();
+    }
+    
+	@Override
 	protected void onListItemClick(ListView listView, View view, int position, long id) {
     	Intent intent = new Intent(this, ViewPasswordItemActivity.class);
     	intent.putExtra("id", id);
@@ -80,21 +67,21 @@ public class PasswordItemListActivity extends ListActivity {
 	public static class FpmFileListAdapter extends BaseAdapter {
     	
     	LayoutInflater layoutInflater;
-    	FpmCrypt fpmCrypt;
+    	FpmApplication app;
     	
-    	public FpmFileListAdapter(Context context) {
-    		layoutInflater = LayoutInflater.from(context);
-    		fpmCrypt = FpmCrypt.getInstance();
+    	public FpmFileListAdapter(Activity activity) {
+    		layoutInflater = LayoutInflater.from(activity);
+    		app = (FpmApplication) activity.getApplication();
     	}
     	
 		@Override
 		public int getCount() {
-			return fpmCrypt.getFpmFile().getPasswordItems().size();
+			return app.getPasswordItems().size();
 		}
 
 		@Override
 		public Object getItem(int position) {
-			return fpmCrypt.getFpmFile().getPasswordItems().get(position);
+			return app.getPasswordItemById(position);
 		}
 
 		@Override
@@ -105,7 +92,7 @@ public class PasswordItemListActivity extends ListActivity {
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ViewHolder viewHolder = null;
-			PasswordItem item = fpmCrypt.getFpmFile().getPasswordItems().get(position);
+			PasswordItem item = (PasswordItem) this.getItem(position);
 			
 			if (convertView == null) {
 				viewHolder = new ViewHolder(); 

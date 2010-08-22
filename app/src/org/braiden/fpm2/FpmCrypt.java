@@ -53,30 +53,13 @@ public class FpmCrypt {
 	protected final static String AES_VSTRING_HASH_FUNCTION = "SHA256";	
 	protected final static String TAG = "FpmCrypt";
 	protected final static String PROPERTY_PASSWORD = "password";
-	
-	private static FpmCrypt INSTANCE = null;
-	
+		
 	private FpmCipher cipher;
 	private FpmKeyGenerator keyGenerator;
 	private FpmFile fpmFile;
 	private byte[] key;
 	
-	public synchronized static FpmCrypt getInstance() {
-		if (INSTANCE == null) {
-			INSTANCE = new FpmCrypt();
-		}
-		return INSTANCE;
-	}
-	
 	public void open(InputStream inputStream, String password) throws Exception {
-		open(inputStream, password, null);
-	}
-	
-	public void open(InputStream inputStream, byte[] key) throws Exception {
-		open(inputStream, null, key);
-	}
-	
-	public void open(InputStream inputStream, String password, byte[] key) throws Exception {
 		try {
 			fpmFile = FpmFileXmlParser.parse(inputStream);
 			cipher = createCipher(fpmFile);
@@ -84,11 +67,7 @@ public class FpmCrypt {
 			if (cipher == null || keyGenerator == null) {
 				throw new Exception("FPM Cipher \"" + fpmFile.getKeyInfo().getCipher() + "\" is not supported.");
 			}
-			if (key == null) {
-				this.key = keyGenerator.generateKey(password, fpmFile.getKeyInfo().getSalt());
-			} else {
-				this.key = key;
-			}
+			this.key = keyGenerator.generateKey(password, fpmFile.getKeyInfo().getSalt());
 			decryptAll();
 			if (!verifyVstring()) {
 				throw new Exception("Password invalid.");
@@ -124,7 +103,7 @@ public class FpmCrypt {
 	public FpmFile getFpmFile() {
 		return fpmFile;
 	}
-
+	
 	protected void decryptAll() {				
 		for (PasswordItem passwordItem : fpmFile.getPasswordItems()) {
 			decryptBean(passwordItem);
