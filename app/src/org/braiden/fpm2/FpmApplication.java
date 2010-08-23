@@ -58,9 +58,9 @@ import android.widget.EditText;
 public class FpmApplication extends Application {
 
 	// Action (Itent) published whenever the FPM db is unlocked
-	public static final String ACTION_FPM_UNLOCKED = "org.braiden.fpm2.FPM_OPEN";
+	public static final String ACTION_FPM_UNLOCKED = "org.braiden.fpm2.FPM_UNLOCKED";
 	// Action (Itent) published whenever the FPM db is locked
-	public static final String ACTION_FPM_LOCKED = "org.braiden.fpm2.FPM_CLOSE";
+	public static final String ACTION_FPM_LOCKED = "org.braiden.fpm2.FPM_LOCKED";
 	
 	// default time, in milliseconds, before the FPM database is locked
 	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
