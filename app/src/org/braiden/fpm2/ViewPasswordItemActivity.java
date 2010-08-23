@@ -72,8 +72,8 @@ public class ViewPasswordItemActivity extends ListActivity {
 		
 		// create a reciever to listen for data lock/unlock
 		IntentFilter filter = new IntentFilter();
-		filter.addAction(FpmApplication.ACTION_FPM_CLOSE);
-		filter.addAction(FpmApplication.ACTION_FPM_OPEN);
+		filter.addAction(FpmApplication.ACTION_FPM_LOCKED);
+		filter.addAction(FpmApplication.ACTION_FPM_UNLOCKED);
 		fpmCryptReceiver = new PasswordItemListActivity.FpmCryptBroadcastReceiver(this, adapter);
 		registerReceiver(fpmCryptReceiver, filter);
 	}

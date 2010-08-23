@@ -66,8 +66,8 @@ public class PasswordItemListActivity extends ListActivity {
     	// of FPM db, and notifies the list view to update accordingly
     	fpmCryptReceiver = new FpmCryptBroadcastReceiver(this, adapter);    	
     	IntentFilter filter = new IntentFilter();
-    	filter.addAction(FpmApplication.ACTION_FPM_CLOSE);
-    	filter.addAction(FpmApplication.ACTION_FPM_OPEN);
+    	filter.addAction(FpmApplication.ACTION_FPM_LOCKED);
+    	filter.addAction(FpmApplication.ACTION_FPM_UNLOCKED);
     	registerReceiver(fpmCryptReceiver, filter);
     }
 

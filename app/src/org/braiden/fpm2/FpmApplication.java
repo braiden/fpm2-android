@@ -29,6 +29,8 @@ package org.braiden.fpm2;
 import java.io.FileInputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.braiden.fpm2.model.PasswordItem;
 
@@ -36,11 +38,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.app.Service;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,36 +58,25 @@ import android.widget.EditText;
 public class FpmApplication extends Application {
 
 	// Action (Itent) published whenever the FPM db is unlocked
-	public static final String ACTION_FPM_OPEN = "org.braiden.fpm2.FPM_OPEN";
+	public static final String ACTION_FPM_UNLOCKED = "org.braiden.fpm2.FPM_OPEN";
 	// Action (Itent) published whenever the FPM db is locked
-	public static final String ACTION_FPM_CLOSE = "org.braiden.fpm2.FPM_CLOSE";
+	public static final String ACTION_FPM_LOCKED = "org.braiden.fpm2.FPM_CLOSE";
 	
 	// default time, in milliseconds, before the FPM database is locked
-	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
+	public static final long FPM_AUTO_LOCK_MILLISECONDS = 10L * 1000L;
 	// default location if the FPM databased (XML) file
 	public static final String FPM_FILE = "/sdcard/fpm";
 	
 	protected static final String TAG = "FpmApplication";
 	
-	private FpmCrypt fpmCrypt;
-	private BroadcastReceiver autoCloseReceiver;
+	private Timer autoLockTimer = new Timer();
+	private FpmCrypt fpmCrypt = new FpmCrypt();
 	volatile private ProgressDialog dialog;
-
-	@Override
-	public void onCreate() {
-		super.onCreate();
-		fpmCrypt = new FpmCrypt();
-		autoCloseReceiver = new AutoCloseFpmBroadcastReceiver(this, fpmCrypt);
-		IntentFilter filter = new IntentFilter();
-		filter.addAction(ACTION_FPM_CLOSE);
-		filter.addAction(ACTION_FPM_OPEN);
-		registerReceiver(autoCloseReceiver, filter);
-	}
 	
 	@Override
 	public void onTerminate() {
+		autoLockTimer.cancel();
 		super.onTerminate();
-		unregisterReceiver(autoCloseReceiver);
 	}
 
 	/**
@@ -146,7 +136,7 @@ public class FpmApplication extends Application {
 	 */
 	public void closeCrypt() {
 		fpmCrypt.close();
-		System.gc();
+		sendBroadcast(new Intent(ACTION_FPM_LOCKED));
 	}
 	
 	/**
@@ -155,24 +145,6 @@ public class FpmApplication extends Application {
 	 */
 	public boolean isCryptOpen() {
 		return fpmCrypt.isOpen();
-	}
-	
-	protected void dismissBusyDialog() {
-		dialog.dismiss();
-		dialog = null;
-	}
-
-	/**
-	 * Try to open the FPM store with given passphrase.
-	 * This method can be slow, and should be run in a seperate Service/Thread
-	 * 
-	 * @param passphrase
-	 * @throws Exception
-	 */
-	protected void unlock(String passphrase) throws Exception {
-		FpmApplication.this.fpmCrypt.open(
-				new FileInputStream(FPM_FILE),
-				passphrase);
 	}
 
 	/**
@@ -221,52 +193,63 @@ public class FpmApplication extends Application {
 			return items.get((int) id);
 		}
 	}
-	
+
 	/**
-	 * The class listens for the FPM_OPEN (unlocked) event,
-	 * and creates a thread to automatically close the store
-	 * at sometime in the future.
+	 * A background service for openning the encrypted FPM store.
+	 * For AES-256, FPM uses PBKDF2-SHA2 with 8k iterations, this
+	 * could take > 20 seconds on slower devices.
+	 * 
+	 * We need a seperate service / thread to prevent
+	 * "Application Not Responding" dialog.
 	 * 
 	 * @author braiden
 	 *
 	 */
-	public static class AutoCloseFpmBroadcastReceiver extends BroadcastReceiver {
+	public static class FpmUnlockService extends Service {
+			
+		@Override
+		public IBinder onBind(Intent intent) {
+			return null;
+		}
 
-		Thread autoCloseThread = null;
-		FpmCrypt fpmCrypt;
-		Context ctx;
-		
-		public AutoCloseFpmBroadcastReceiver(Context ctx, FpmCrypt crypt) {
-			this.fpmCrypt = crypt;
-			this.ctx = ctx;
+		@Override
+		public void onStart(Intent intent, int startId) {
+			super.onStart(intent, startId);
+			final FpmApplication app = (FpmApplication) getApplication();
+			final String passphrase = intent.getStringExtra("passphrase");
+			
+			new Thread() {
+				@Override
+				public void run() {
+					try {
+						// do the unlock
+						app.fpmCrypt.open(new FileInputStream(FPM_FILE), passphrase);
+						dismissBusyDialog(app);
+						// dispatch event notifying activities that data is ready
+						sendBroadcast(new Intent(ACTION_FPM_UNLOCKED));
+						app.autoLockTimer.purge();
+						app.autoLockTimer.schedule(new TimerTask() {
+							@Override
+							public void run() {
+								app.closeCrypt();
+							}
+						}, FPM_AUTO_LOCK_MILLISECONDS);
+					} catch (Exception e) {
+						app.autoLockTimer.purge();
+						dismissBusyDialog(app);
+						Log.w(TAG, "Failed to unlock FpmCrypt.", e);
+						// dispatch event saying data is gone.
+						sendBroadcast(new Intent(ACTION_FPM_LOCKED));
+					}
+					stopSelf();
+				}
+			}.start();
 		}
 		
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if (ACTION_FPM_OPEN.equals(intent.getAction())) {
-				if (autoCloseThread == null || !autoCloseThread.isAlive()) {
-					// a java Thread is fine, no user impact 
-					// of OS killing our app with only this thread is alive.
-					autoCloseThread = new Thread() {
-						@Override
-						public void run() {
-							try {
-								Thread.sleep(FPM_AUTO_LOCK_MILLISECONDS);
-								fpmCrypt.close();
-								Intent intent = new Intent(ACTION_FPM_CLOSE);
-								ctx.sendBroadcast(intent);
-							} catch (InterruptedException e) {
-								
-							}
-						}
-					};
-					autoCloseThread.start();
-				}
-			} else if (ACTION_FPM_CLOSE.equals(intent.getAction())) {
-				if (autoCloseThread != null && autoCloseThread.isAlive()) {
-					autoCloseThread.interrupt();
-					autoCloseThread = null;
-				}
+		private static void dismissBusyDialog(FpmApplication app) {
+			if (app.dialog != null) {
+				app.dialog.dismiss();
+				app.dialog = null;
 			}
 		}
 		
