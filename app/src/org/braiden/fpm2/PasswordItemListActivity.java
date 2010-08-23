@@ -64,11 +64,8 @@ public class PasswordItemListActivity extends ListActivity {
     	
     	// the crypt reciever listens for broadcasts regarding state
     	// of FPM db, and notifies the list view to update accordingly
-    	fpmCryptReceiver = new FpmCryptBroadcastReceiver(this, adapter);    	
-    	IntentFilter filter = new IntentFilter();
-    	filter.addAction(FpmApplication.ACTION_FPM_LOCKED);
-    	filter.addAction(FpmApplication.ACTION_FPM_UNLOCKED);
-    	registerReceiver(fpmCryptReceiver, filter);
+    	fpmCryptReceiver = new FpmCryptBroadcastReceiver(adapter);
+    	registerReceiver(fpmCryptReceiver, FpmCryptBroadcastReceiver.createIntentFilter());
     }
 
 	@Override
@@ -77,16 +74,17 @@ public class PasswordItemListActivity extends ListActivity {
 		// must deregister on exit
 		unregisterReceiver(fpmCryptReceiver);
 	}
-
+	
 	@Override
-    protected void onResume() {
-		super.onResume();
-		// when ever the app regains view on device, make sure db is unlocked.
-		// if it is locked, user will be prompted for password.
-    	FpmApplication app = (FpmApplication) this.getApplication();
-    	app.openCrypt(this);
-    }
-    
+	public void onWindowFocusChanged(boolean hasFocus) {		
+		super.onWindowFocusChanged(hasFocus);
+		// make sure to unlock db if user is viewing app
+		if (hasFocus) {
+	    	FpmApplication app = (FpmApplication) this.getApplication();
+	    	app.openCrypt(this);
+		}
+	}
+
 	@Override
 	protected void onListItemClick(ListView listView, View view, int position, long id) {
 		// open the View details activity when an item is selected.
@@ -115,24 +113,23 @@ public class PasswordItemListActivity extends ListActivity {
 	 */
 	public static class FpmCryptBroadcastReceiver extends BroadcastReceiver {
 
-		private Activity activity;
 		private BaseAdapter listAdapter;
 		
-		public FpmCryptBroadcastReceiver(Activity activity, BaseAdapter listAdapter) {
+		public FpmCryptBroadcastReceiver(BaseAdapter listAdapter) {
 			this.listAdapter = listAdapter;
-			this.activity = activity;
+		}
+		
+		public static IntentFilter createIntentFilter() {
+	    	IntentFilter filter = new IntentFilter();
+	    	filter.addAction(FpmApplication.ACTION_FPM_LOCKED);
+	    	filter.addAction(FpmApplication.ACTION_FPM_UNLOCKED);
+	    	return filter;
 		}
 		
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			// update view
 			listAdapter.notifyDataSetChanged();
-			
-			// fpm as been locked, if user is still in this screen
-			// popup dialog to unlock it again.
-			if (activity.hasWindowFocus()) {
-				((FpmApplication) activity.getApplication()).openCrypt(activity);
-			}
 		}
 		
 	}

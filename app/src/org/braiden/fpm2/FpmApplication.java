@@ -63,7 +63,7 @@ public class FpmApplication extends Application {
 	public static final String ACTION_FPM_LOCKED = "org.braiden.fpm2.FPM_CLOSE";
 	
 	// default time, in milliseconds, before the FPM database is locked
-	public static final long FPM_AUTO_LOCK_MILLISECONDS = 10L * 1000L;
+	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
 	// default location if the FPM databased (XML) file
 	public static final String FPM_FILE = "/sdcard/fpm";
 	
@@ -88,7 +88,7 @@ public class FpmApplication extends Application {
 	 */
 	public void openCrypt(final Activity activity) {
 		// db is not already open, and not currently checking a password
-		if (!isCryptOpen() && dialog == null) {
+		if (!isCryptOpen()) {
 			LayoutInflater factory = LayoutInflater.from(activity);
 			final View textEntryView = factory.inflate(R.layout.passphrase_dialog, null);
 			final EditText editText = (EditText) textEntryView.findViewById(R.id.password_edit);
@@ -225,8 +225,7 @@ public class FpmApplication extends Application {
 						// do the unlock
 						app.fpmCrypt.open(new FileInputStream(FPM_FILE), passphrase);
 						dismissBusyDialog(app);
-						// dispatch event notifying activities that data is ready
-						sendBroadcast(new Intent(ACTION_FPM_UNLOCKED));
+						// schedule event to re-lock the db
 						app.autoLockTimer.purge();
 						app.autoLockTimer.schedule(new TimerTask() {
 							@Override
@@ -234,6 +233,8 @@ public class FpmApplication extends Application {
 								app.closeCrypt();
 							}
 						}, FPM_AUTO_LOCK_MILLISECONDS);
+						// dispatch event notifying activities that data is ready
+						sendBroadcast(new Intent(ACTION_FPM_UNLOCKED));
 					} catch (Exception e) {
 						app.autoLockTimer.purge();
 						dismissBusyDialog(app);

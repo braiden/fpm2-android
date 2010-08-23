@@ -26,13 +26,13 @@ package org.braiden.fpm2;
  *
  */
 
+import org.braiden.fpm2.PasswordItemListActivity.FpmCryptBroadcastReceiver;
 import org.braiden.fpm2.model.PasswordItem;
 import org.braiden.fpm2.util.PropertyUtils;
 
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -71,20 +71,18 @@ public class ViewPasswordItemActivity extends ListActivity {
 		this.setListAdapter(adapter);
 		
 		// create a reciever to listen for data lock/unlock
-		IntentFilter filter = new IntentFilter();
-		filter.addAction(FpmApplication.ACTION_FPM_LOCKED);
-		filter.addAction(FpmApplication.ACTION_FPM_UNLOCKED);
-		fpmCryptReceiver = new PasswordItemListActivity.FpmCryptBroadcastReceiver(this, adapter);
-		registerReceiver(fpmCryptReceiver, filter);
+		fpmCryptReceiver = new FpmCryptBroadcastReceiver(adapter);
+		registerReceiver(fpmCryptReceiver, FpmCryptBroadcastReceiver.createIntentFilter());
 	}
 	
 	@Override
-	protected void onResume() {
-		super.onResume();
-		// whenever user switches back to our app generate password
-		// prompt if data is locked.
-		FpmApplication app = (FpmApplication) this.getApplication();
-		app.openCrypt(this);
+	public void onWindowFocusChanged(boolean hasFocus) {		
+		super.onWindowFocusChanged(hasFocus);
+		// make sure to unlock db if user is viewing app
+		if (hasFocus) {
+	    	FpmApplication app = (FpmApplication) this.getApplication();
+	    	app.openCrypt(this);
+		}
 	}
 
 	@Override
