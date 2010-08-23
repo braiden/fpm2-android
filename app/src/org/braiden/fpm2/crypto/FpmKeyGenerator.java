@@ -28,6 +28,14 @@ package org.braiden.fpm2.crypto;
 
 public interface FpmKeyGenerator {
 
+	/**
+	 * Given a passphrase and salt, generated a key
+	 * 
+	 * @param secret
+	 * @param salt
+	 * @return
+	 * @throws Exception
+	 */
 	byte[] generateKey(String secret, String salt) throws Exception;
 
 }

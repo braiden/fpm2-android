@@ -29,6 +29,12 @@ package org.braiden.fpm2.crypto;
 public class FpmCryptoUtils
 {
 	
+	/**
+	 * Base-16 to byte[] coversion using FPM logic.
+	 * 
+	 * @param s
+	 * @return
+	 */
 	public static byte[] decodeString(String s) {
 		byte[] result = new byte[s.length()/2];
 
@@ -42,6 +48,15 @@ public class FpmCryptoUtils
 		return result;		
 	}
 
+	/**
+	 * Unrotate data. Fpm interleaves data into muliple blocks
+	 * to ensure encrypted value always cahnges even if the 
+	 * first block is unchanged. 
+	 * 
+	 * @param data
+	 * @param blockSizeBytes
+	 * @return
+	 */
 	public static byte[] unrotate(byte[] data, int blockSizeBytes) {
 		byte result[] = new byte[data.length];
 		

@@ -46,16 +46,27 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 
+/**
+ * FpmApplication provides all Actitities and Services with access 
+ * to the FPM PasswordItems, and ability to unlock the datastore.
+ * 
+ * @author braiden
+ *
+ */
+
 public class FpmApplication extends Application {
 
+	// Action (Itent) published whenever the FPM db is unlocked
 	public static final String ACTION_FPM_OPEN = "org.braiden.fpm2.FPM_OPEN";
+	// Action (Itent) published whenever the FPM db is locked
 	public static final String ACTION_FPM_CLOSE = "org.braiden.fpm2.FPM_CLOSE";
 	
+	// default time, in milliseconds, before the FPM database is locked
 	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
+	// default location if the FPM databased (XML) file
 	public static final String FPM_FILE = "/sdcard/fpm";
 	
 	protected static final String TAG = "FpmApplication";
-	protected static final int DIALOG_BUSY = 0;
 	
 	private FpmCrypt fpmCrypt;
 	private BroadcastReceiver autoCloseReceiver;
@@ -78,7 +89,15 @@ public class FpmApplication extends Application {
 		unregisterReceiver(autoCloseReceiver);
 	}
 
+	/**
+	 * If the FPM store is not already open and unlocked,
+	 * try to open it. Creates a password dialog in the given
+	 * activity.
+	 * 
+	 * @param activity
+	 */
 	public void openCrypt(final Activity activity) {
+		// db is not already open, and not currently checking a password
 		if (!isCryptOpen() && dialog == null) {
 			LayoutInflater factory = LayoutInflater.from(activity);
 			final View textEntryView = factory.inflate(R.layout.passphrase_dialog, null);
@@ -91,23 +110,27 @@ public class FpmApplication extends Application {
             		@Override
             		public void onClick(DialogInterface dialog, int whichButton) {
            				dialog.dismiss();
-           				activity.showDialog(DIALOG_BUSY);
-           				
-           				Intent intent = new Intent(activity, FpmUnlockService.class);
-           				intent.putExtra("passphrase", editText.getText().toString());
-           				
+
+           				// create a busy dialog
            				ProgressDialog d = FpmApplication.this.dialog = new ProgressDialog(activity);
            				d.setMessage(activity.getResources().getString(R.string.checking_passphrase));
            				d.setCancelable(false);
            				d.setIndeterminate(true);
            				d.show();
            				
+           				// start a service which will generate the crypto key
+           				// on slow devices this can take a while. event on 
+           				// fast devices can see ANR.
+           				Intent intent = new Intent(activity, FpmUnlockService.class);
+           				intent.putExtra("passphrase", editText.getText().toString());
            				activity.startService(intent);
             		}
             	})
             	.setNegativeButton(R.string.passphrase_dialog_cancel, new DialogInterface.OnClickListener() {
             		@Override
             		public void onClick(DialogInterface dialog, int which) {
+            			// user canceled passphrase dialog, application will terminate
+            			// stop this activity, and cascade -1 result.
             			activity.setResult(-1);
             			activity.finish();
             		}
@@ -117,25 +140,47 @@ public class FpmApplication extends Application {
 		}		
 	}
 	
-	protected void dismissBusyDialog() {
-		dialog.dismiss();
-		dialog = null;
-	}
-	
+	/**
+	 * Close the FPM datastore. User will need to enter
+	 * passphrase again, before accessing any data. 
+	 */
 	public void closeCrypt() {
 		fpmCrypt.close();
+		System.gc();
 	}
 	
+	/**
+	 * True if the FPM store is open and unencrypted
+	 * @return
+	 */
 	public boolean isCryptOpen() {
 		return fpmCrypt.isOpen();
 	}
 	
+	protected void dismissBusyDialog() {
+		dialog.dismiss();
+		dialog = null;
+	}
+
+	/**
+	 * Try to open the FPM store with given passphrase.
+	 * This method can be slow, and should be run in a seperate Service/Thread
+	 * 
+	 * @param passphrase
+	 * @throws Exception
+	 */
 	protected void unlock(String passphrase) throws Exception {
 		FpmApplication.this.fpmCrypt.open(
 				new FileInputStream(FPM_FILE),
 				passphrase);
 	}
 
+	/**
+	 * Decrypt the given string using the key of open store.
+	 * 
+	 * @param s
+	 * @return
+	 */
 	public String decrypt(String s) {
 		if (isCryptOpen()) {
 			try {
@@ -149,6 +194,11 @@ public class FpmApplication extends Application {
 		}
 	}
 	
+	/**
+	 * Get all password items in this store.
+	 * 
+	 * @return
+	 */
 	public List<PasswordItem> getPasswordItems() {
 		if (isCryptOpen()) {
 			return fpmCrypt.getFpmFile().getPasswordItems();
@@ -157,6 +207,12 @@ public class FpmApplication extends Application {
 		}
 	}
 	
+	/**
+	 * Get a password item by ID.
+	 * 
+	 * @param id
+	 * @return
+	 */
 	public PasswordItem getPasswordItemById(long id) {
 		List<PasswordItem> items = getPasswordItems();
 		if (id >= items.size()) {
@@ -166,6 +222,14 @@ public class FpmApplication extends Application {
 		}
 	}
 	
+	/**
+	 * The class listens for the FPM_OPEN (unlocked) event,
+	 * and creates a thread to automatically close the store
+	 * at sometime in the future.
+	 * 
+	 * @author braiden
+	 *
+	 */
 	public static class AutoCloseFpmBroadcastReceiver extends BroadcastReceiver {
 
 		Thread autoCloseThread = null;
@@ -181,6 +245,8 @@ public class FpmApplication extends Application {
 		public void onReceive(Context context, Intent intent) {
 			if (ACTION_FPM_OPEN.equals(intent.getAction())) {
 				if (autoCloseThread == null || !autoCloseThread.isAlive()) {
+					// a java Thread is fine, no user impact 
+					// of OS killing our app with only this thread is alive.
 					autoCloseThread = new Thread() {
 						@Override
 						public void run() {

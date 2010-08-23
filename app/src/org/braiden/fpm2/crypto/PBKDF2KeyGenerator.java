@@ -35,6 +35,16 @@ import javax.crypto.SecretKey;
 import javax.crypto.ShortBufferException;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * Simple impelmentation of PBKDF2 based on specs here:
+ * ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-5v2/pkcs5v2-0.pdf
+ * 
+ * Should be usable with any JCE supported HMAC, keylength, and iterations.
+ * 
+ * @author braiden
+ *
+ */
+
 public class PBKDF2KeyGenerator {
 	
 	private int keyLengthBytes;
@@ -86,6 +96,7 @@ public class PBKDF2KeyGenerator {
 
 		}
 
+		// futile(?) attempt to clean up memory
 		Arrays.fill(hash1, (byte)0);
 		Arrays.fill(hash2, (byte)0);
 		Arrays.fill(intermediateResult, (byte)0);

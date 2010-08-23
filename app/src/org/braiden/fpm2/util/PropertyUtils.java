@@ -35,6 +35,15 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 
+/**
+ * API similary to apache commons PropertyUtils
+ * (which doesn't run on android do to missing jdk classes)
+ * 
+ * 
+ * @author braiden
+ *
+ */
+
 public class PropertyUtils {
 
 	private static final String METHOD_GET_CLASS = "getClass";

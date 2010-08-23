@@ -35,6 +35,16 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.lang.ArrayUtils;
 
+/**
+ * Java Crypto Extensions implementation of FpmCipher.
+ * Default constructor creates AES implementation, but
+ * this class should be usable for blowfish, or other
+ * chiphers as well.
+ * 
+ * @author braiden
+ *
+ */
+
 public class JCEFpmCipher implements FpmCipher {
 
 	public final static String DEFAULT_CIPHER = "AES/ECB/NoPadding";

@@ -42,6 +42,16 @@ import org.xml.sax.helpers.DefaultHandler;
 import android.util.Log;
 import android.util.Xml;
 
+/**
+ * Build FpmFile object model from FPM xml file.
+ * 
+ * Basically tries to attributes and nodes onto beans
+ * with properties of the same name.
+ * 
+ * @author braiden
+ *
+ */
+
 public class FpmFileXmlParser {
 
 	private static final String TAG = "FpmXmlParser";

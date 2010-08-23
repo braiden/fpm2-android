@@ -30,6 +30,16 @@ import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.lang.StringUtils;
 
+/**
+ * Generate a key using PBKDF2 and the provided mac.
+ * The default consructur matches FPM's AES rules.
+ * But this class should be able to support other
+ * hmacs, keylengths, and interations.
+ * 
+ * @author braiden
+ *
+ */
+
 public class PBKDF2FpmKeyGenerator implements FpmKeyGenerator {
 
 	public static final int DEFAULT_KEY_LENGTH_BYTES = 32;

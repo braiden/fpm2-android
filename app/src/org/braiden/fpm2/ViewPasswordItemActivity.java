@@ -42,6 +42,13 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+/**
+ * Display details for a single password entry.
+ * 
+ * @author braiden
+ *
+ */
+
 public class ViewPasswordItemActivity extends ListActivity {
 
 	protected final static String TAG = "ViewPasswordItemActivity";
@@ -53,13 +60,17 @@ public class ViewPasswordItemActivity extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		// get the element id being displayed
 		FpmApplication app = (FpmApplication) this.getApplication();
 		this.id = getIntent().getLongExtra("id", -1L);
+		
+		// update the title
 		String title = getIntent().getStringExtra("title");
 		BaseAdapter adapter = new PasswordItemPropertyListAdapter(this, app, id);
 		this.setTitle(getResources().getString(R.string.app_name) + " - " + title);
 		this.setListAdapter(adapter);
 		
+		// create a reciever to listen for data lock/unlock
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(FpmApplication.ACTION_FPM_CLOSE);
 		filter.addAction(FpmApplication.ACTION_FPM_OPEN);
@@ -70,6 +81,8 @@ public class ViewPasswordItemActivity extends ListActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		// whenever user switches back to our app generate password
+		// prompt if data is locked.
 		FpmApplication app = (FpmApplication) this.getApplication();
 		app.openCrypt(this);
 	}
@@ -83,6 +96,7 @@ public class ViewPasswordItemActivity extends ListActivity {
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
+		// clicking on the password item, causes the "****" to be replaced with real password.
 		if (position == PasswordItemPropertyListAdapter.POSITION_OF_PASSWORD) {
 			FpmApplication app = ((FpmApplication) getApplication());
 			PasswordItem item = app.getPasswordItemById(this.id);
@@ -166,10 +180,13 @@ public class ViewPasswordItemActivity extends ListActivity {
 			viewHolder.key.setText(TITLES[position]);
 			try {
 				if (passwordItem == null) {
+					// the db is locked, display a place holder.
 					viewHolder.value.setText("????????");
 				} if (position != POSITION_OF_PASSWORD) {
+					// display the valie
 					viewHolder.value.setText("" + PropertyUtils.getProperty(passwordItem, PROPERTIES[position]));
 				} else {
+					// .getPassword returns the FPM encrypted string. display **** instead.
 					viewHolder.value.setText("********");
 				}
 			} catch (Exception e) {

@@ -28,12 +28,48 @@ package org.braiden.fpm2.crypto;
 
 public interface FpmCipher {
 	
+	/**
+	 * Given a key, and string of encrypted data encoded in FPM2's format
+	 * convert to a pritable plaintext java string.
+	 * 
+	 * @param key
+	 * @param encryptedData
+	 * @return
+	 * @throws Exception
+	 */
 	String decrypt(byte[] key, String encryptedData) throws Exception;
 	
+	/**
+	 * Given a key, and FPM encoded ecrypted String, return a byte[]
+	 * containing the raw (but FPM rotated) output of the cipher.
+	 * 
+	 * @param key
+	 * @param encryptedData
+	 * @return
+	 * @throws Exception
+	 */
 	byte[] decryptRaw(byte[] key, String encryptedData) throws Exception;
 	
+	/**
+	 * Given key, and plain text string encrypt to FPM2's rules.
+	 * Ensuring '\00' terminated C string and randomg data padding
+	 * to next blocksize.
+	 * 
+	 * @param key
+	 * @param plainText
+	 * @return
+	 * @throws Exception
+	 */
 	String encrypt(byte[] key, String plainText) throws Exception;
 	
+	/**
+	 * Rotate and encode the given byte[] using FPM's cipher.
+	 * 
+	 * @param key
+	 * @param clear
+	 * @return
+	 * @throws Exception
+	 */
 	String encryptRaw(byte[] key, byte clear[]) throws Exception;
 	
 }

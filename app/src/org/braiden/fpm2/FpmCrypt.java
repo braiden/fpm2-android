@@ -46,6 +46,13 @@ import org.braiden.fpm2.xml.FpmFileXmlParser;
 
 import android.util.Log;
 
+/**
+ * FpmCrypt provides high level access to an FPM file.
+ * It encapsulates the data and the ciphers.
+ *  
+ * @author braiden
+ *
+ */
 public class FpmCrypt {
 	
 	public final static String FPM_CIPHER_AES_256 = "AES-256";
@@ -59,16 +66,33 @@ public class FpmCrypt {
 	private FpmFile fpmFile;
 	volatile private byte[] key;
 	
+	/**
+	 * Open the given FPM file, pointed to by inputStream
+	 * 
+	 * @param inputStream open inputStream positioned at start of file.
+	 * @param password passphrase used to generate key for reading file
+	 * @throws Exception in case of bad password, unsupported file format, cipher, or IO error
+	 */
 	public void open(InputStream inputStream, String password) throws Exception {
 		try {
+			// build data objects form xml
 			fpmFile = FpmFileXmlParser.parse(inputStream);
+			
+			// locate a cipher and key generator for the given inpurt file
 			cipher = createCipher(fpmFile);
 			keyGenerator = createKeyGenerator(fpmFile);
+			
+			// can't go further if cipher of key gen is null (this fpm file format is not supported).
 			if (cipher == null || keyGenerator == null) {
 				throw new Exception("FPM Cipher \"" + fpmFile.getKeyInfo().getCipher() + "\" is not supported.");
 			}
+			// build a key (byte[]) from the provided password.
 			this.key = keyGenerator.generateKey(password, fpmFile.getKeyInfo().getSalt());
+			
+			// decrypt everything except passwords inplace in our model.
 			decryptAll();
+			
+			// verify data decrypted ok, if not, key must be invalid.
 			if (!verifyVstring()) {
 				throw new Exception("Password invalid.");
 			}
@@ -78,12 +102,20 @@ public class FpmCrypt {
 		}
 	}
 	
+	/**
+	 * True if this FpmCrypt is open and key is valid.
+	 * @return
+	 */
 	public boolean isOpen() {
 		return key != null;
 	}
 	
+	/**
+	 * Close the crypt
+	 */
 	public void close() {
 		if (isOpen()) {
+			// futile(?) attempt to clean key from memory.
 			Arrays.fill(key, (byte)0);
 			cipher = null;
 			keyGenerator = null;
@@ -92,18 +124,40 @@ public class FpmCrypt {
 		}
 	}
 	
+	/**
+	 * Decrypt the provided string using FPM2's logic
+	 * 
+	 * @param encryptedData
+	 * @return
+	 * @throws Exception
+	 */
 	public String decrypt(String encryptedData) throws Exception {
 		return cipher.decrypt(key, encryptedData);
 	}
 	
+	/**
+	 * Encrypt the provided string, tranform into FPM's base16 format.
+	 * 
+	 * @param clearTextData
+	 * @return
+	 * @throws Exception
+	 */
 	public String encrypt(String clearTextData) throws Exception {
 		return cipher.encrypt(key, clearTextData);
 	}
 
+	/**
+	 * Date the data object (passwords and launchers)
+	 * 
+	 * @return
+	 */
 	public FpmFile getFpmFile() {
 		return fpmFile;
 	}
 	
+	/**
+	 * decrypt all PasswordItems and Launchers
+	 */
 	protected void decryptAll() {				
 		for (PasswordItem passwordItem : fpmFile.getPasswordItems()) {
 			decryptBean(passwordItem);
@@ -113,6 +167,13 @@ public class FpmCrypt {
 		}
 	}
 	
+	/**
+	 * Assume the all string properties for the given
+	 * bean are encrypted, and try to convert to clear text.
+	 * Password property is skipped.
+	 * 
+	 * @param bean
+	 */
 	protected void decryptBean(DataObject bean) {
 		Map<String, Object> beanProps;
 		try {
@@ -134,6 +195,12 @@ public class FpmCrypt {
 		}
 	}
 	
+	/**
+	 * Verify the vstring hash is ok. This is used to confirm password/key is OK.
+	 * 
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 */
 	protected boolean verifyVstring() throws NoSuchAlgorithmException {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return aesVerifyVstring();
@@ -141,6 +208,12 @@ public class FpmCrypt {
 		return false;
 	}
 	
+	/**
+	 * AES version of vstring check.
+	 * 
+	 * @return
+	 * @throws NoSuchAlgorithmException
+	 */
 	protected boolean aesVerifyVstring() throws NoSuchAlgorithmException {
 		MessageDigest digest = MessageDigest.getInstance(AES_VSTRING_HASH_FUNCTION);
 		for (PasswordItem item : fpmFile.getPasswordItems()) {
@@ -167,6 +240,14 @@ public class FpmCrypt {
 		return MessageDigest.isEqual(myVstring, fileVstring);
 	}
 	
+	/**
+	 * Get the FpmCipher which know how to decrypt data in this file.
+	 * Currently only AES-256 is supported.
+	 * 
+	 * @param fpmFile
+	 * @return
+	 * @throws Exception
+	 */
 	protected static FpmCipher createCipher(FpmFile fpmFile) throws Exception {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return new JCEFpmCipher();
@@ -174,6 +255,14 @@ public class FpmCrypt {
 		return null;
 	}
 	
+	/**
+	 * Get the FpmKeyGenerator which know how to convert password into
+	 * our cipher key. Currently only AES-256/PBKDF2-SHA256 is supported.
+	 * 
+	 * @param fpmFile
+	 * @return
+	 * @throws Exception
+	 */
 	protected static FpmKeyGenerator createKeyGenerator(FpmFile fpmFile) throws Exception {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return new PBKDF2FpmKeyGenerator();
