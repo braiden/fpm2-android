@@ -95,7 +95,7 @@ public class ViewPasswordItemActivity extends ListActivity {
 			}
 		}
 	}
-
+	
 	public static class PasswordItemPropertyListAdapter extends BaseAdapter {
 		
 		public static final int POSITION_OF_PASSWORD = 3;

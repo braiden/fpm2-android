@@ -35,6 +35,7 @@ import org.braiden.fpm2.model.PasswordItem;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Application;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -51,11 +52,14 @@ public class FpmApplication extends Application {
 	public static final String ACTION_FPM_CLOSE = "org.braiden.fpm2.FPM_CLOSE";
 	
 	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
+	public static final String FPM_FILE = "/sdcard/fpm";
 	
 	protected static final String TAG = "FpmApplication";
+	protected static final int DIALOG_BUSY = 0;
 	
 	private FpmCrypt fpmCrypt;
 	private BroadcastReceiver autoCloseReceiver;
+	volatile private ProgressDialog dialog;
 
 	@Override
 	public void onCreate() {
@@ -75,7 +79,7 @@ public class FpmApplication extends Application {
 	}
 
 	public void openCrypt(final Activity activity) {
-		if (!isCryptOpen()) {
+		if (!isCryptOpen() && dialog == null) {
 			LayoutInflater factory = LayoutInflater.from(activity);
 			final View textEntryView = factory.inflate(R.layout.passphrase_dialog, null);
 			final EditText editText = (EditText) textEntryView.findViewById(R.id.password_edit);
@@ -86,10 +90,19 @@ public class FpmApplication extends Application {
             	.setPositiveButton(R.string.passphrase_dialog_ok, new DialogInterface.OnClickListener() {
             		@Override
             		public void onClick(DialogInterface dialog, int whichButton) {
+           				dialog.dismiss();
+           				activity.showDialog(DIALOG_BUSY);
+           				
            				Intent intent = new Intent(activity, FpmUnlockService.class);
            				intent.putExtra("passphrase", editText.getText().toString());
-           				dialog.dismiss();
-           				startService(intent);
+           				
+           				ProgressDialog d = FpmApplication.this.dialog = new ProgressDialog(activity);
+           				d.setMessage(activity.getResources().getString(R.string.checking_passphrase));
+           				d.setCancelable(false);
+           				d.setIndeterminate(true);
+           				d.show();
+           				
+           				activity.startService(intent);
             		}
             	})
             	.setNegativeButton(R.string.passphrase_dialog_cancel, new DialogInterface.OnClickListener() {
@@ -104,6 +117,11 @@ public class FpmApplication extends Application {
 		}		
 	}
 	
+	protected void dismissBusyDialog() {
+		dialog.dismiss();
+		dialog = null;
+	}
+	
 	public void closeCrypt() {
 		fpmCrypt.close();
 	}
@@ -112,9 +130,9 @@ public class FpmApplication extends Application {
 		return fpmCrypt.isOpen();
 	}
 	
-	public void unlock(String passphrase) throws Exception {
+	protected void unlock(String passphrase) throws Exception {
 		FpmApplication.this.fpmCrypt.open(
-				new FileInputStream("/sdcard/fpm"),
+				new FileInputStream(FPM_FILE),
 				passphrase);
 	}
 

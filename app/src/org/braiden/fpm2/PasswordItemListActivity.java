@@ -104,6 +104,7 @@ public class PasswordItemListActivity extends ListActivity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			listAdapter.notifyDataSetChanged();
+			
 			if (activity.hasWindowFocus()) {
 				((FpmApplication) activity.getApplication()).openCrypt(activity);
 			}
@@ -151,8 +152,10 @@ public class PasswordItemListActivity extends ListActivity {
 				viewHolder = (ViewHolder) convertView.getTag();
 			}
 			
-			viewHolder.title.setText(item.getTitle());
-			viewHolder.url.setText(item.getUrl());
+			if (item != null) {
+				viewHolder.title.setText(item.getTitle());
+				viewHolder.url.setText(item.getUrl());
+			}
 
 			return convertView;
 		}

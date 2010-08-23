@@ -17,4 +17,5 @@
     <string name="passphrase_dialog_ok">OK</string>
     <string name="passphrase_dialog_cancel">Cancel</string>
     
+    <string name="checking_passphrase">Checking passphrase...</string>
 </resources>
