@@ -64,7 +64,6 @@ public class PasswordItemListActivity extends FpmListActivity {
 		// open the View details activity when an item is selected.
     	Intent intent = new Intent(this, ViewPasswordItemActivity.class);
     	intent.putExtra(EXTRA_ID, id);
-    	intent.putExtra("title", ((PasswordItem) listView.getItemAtPosition(position)).getTitle());
     	startActivityForResult(intent, 0);
 	}
 	
