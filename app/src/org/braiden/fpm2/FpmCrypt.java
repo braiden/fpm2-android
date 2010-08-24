@@ -64,7 +64,8 @@ public class FpmCrypt {
 	private FpmCipher cipher;
 	private FpmKeyGenerator keyGenerator;
 	private FpmFile fpmFile;
-	volatile private byte[] key;
+	private boolean isOpen;
+	private byte[] key;
 	
 	/**
 	 * Open the given FPM file, pointed to by inputStream
@@ -96,6 +97,8 @@ public class FpmCrypt {
 			if (!verifyVstring()) {
 				throw new Exception("Password invalid.");
 			}
+			
+			isOpen = true;
 		} catch (Exception e) {
 			close();
 			throw e;
@@ -107,7 +110,7 @@ public class FpmCrypt {
 	 * @return
 	 */
 	public boolean isOpen() {
-		return key != null;
+		return isOpen;
 	}
 	
 	/**
@@ -117,6 +120,7 @@ public class FpmCrypt {
 		if (isOpen()) {
 			// futile(?) attempt to clean key from memory.
 			Arrays.fill(key, (byte)0);
+			isOpen = false;
 			cipher = null;
 			keyGenerator = null;
 			fpmFile = null;

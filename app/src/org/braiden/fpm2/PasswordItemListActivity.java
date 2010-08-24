@@ -29,11 +29,7 @@ package org.braiden.fpm2;
 import org.braiden.fpm2.model.PasswordItem;
 
 import android.app.Activity;
-import android.app.ListActivity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,12 +44,10 @@ import android.widget.TextView;
  * @author braiden
  *
  */
-public class PasswordItemListActivity extends ListActivity {
+public class PasswordItemListActivity extends FpmListActivity {
 	
 	protected final static String TAG = "PasswordListActivity";
-	
-	private BroadcastReceiver fpmCryptReceiver;
-	
+		
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);
@@ -61,29 +55,7 @@ public class PasswordItemListActivity extends ListActivity {
     	// register the adapter for building view for each element of our list
     	BaseAdapter adapter = new FpmCryptListAdapter(this);
     	setListAdapter(adapter);
-    	
-    	// the crypt reciever listens for broadcasts regarding state
-    	// of FPM db, and notifies the list view to update accordingly
-    	fpmCryptReceiver = new FpmCryptBroadcastReceiver(adapter);
-    	registerReceiver(fpmCryptReceiver, FpmCryptBroadcastReceiver.createIntentFilter());
     }
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		// must deregister on exit
-		unregisterReceiver(fpmCryptReceiver);
-	}
-	
-	@Override
-	public void onWindowFocusChanged(boolean hasFocus) {		
-		super.onWindowFocusChanged(hasFocus);
-		// make sure to unlock db if user is viewing app
-		if (hasFocus) {
-	    	FpmApplication app = (FpmApplication) this.getApplication();
-	    	app.openCrypt(this);
-		}
-	}
 
 	@Override
 	protected void onListItemClick(ListView listView, View view, int position, long id) {
@@ -92,46 +64,6 @@ public class PasswordItemListActivity extends ListActivity {
     	intent.putExtra("id", id);
     	intent.putExtra("title", ((PasswordItem) listView.getItemAtPosition(position)).getTitle());
     	startActivityForResult(intent, 0);
-	}
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// if a child activity retuned -1, users canceled password prompt
-		// exit this activity too, instead of prompting for password again.
-		if (resultCode < 0) {
-			finish();
-		}
-	}
-
-	/**
-	 * Listens for FPM open / close events, and notifies list view of datamodel changes.
-	 * Also, if an FPM close event occurs while user if viewing this activity,
-	 * generates a prompt for user to unlock the db again. 
-	 * 
-	 * @author braiden
-	 *
-	 */
-	public static class FpmCryptBroadcastReceiver extends BroadcastReceiver {
-
-		private BaseAdapter listAdapter;
-		
-		public FpmCryptBroadcastReceiver(BaseAdapter listAdapter) {
-			this.listAdapter = listAdapter;
-		}
-		
-		public static IntentFilter createIntentFilter() {
-	    	IntentFilter filter = new IntentFilter();
-	    	filter.addAction(FpmApplication.ACTION_FPM_LOCKED);
-	    	filter.addAction(FpmApplication.ACTION_FPM_UNLOCKED);
-	    	return filter;
-		}
-		
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			// update view
-			listAdapter.notifyDataSetChanged();
-		}
-		
 	}
 	
 	/**

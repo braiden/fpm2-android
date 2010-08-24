@@ -26,12 +26,10 @@ package org.braiden.fpm2;
  *
  */
 
-import org.braiden.fpm2.PasswordItemListActivity.FpmCryptBroadcastReceiver;
+//import org.braiden.fpm2.PasswordItemListActivity.FpmCryptBroadcastReceiver;
 import org.braiden.fpm2.model.PasswordItem;
 import org.braiden.fpm2.util.PropertyUtils;
 
-import android.app.ListActivity;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
@@ -49,12 +47,11 @@ import android.widget.TextView;
  *
  */
 
-public class ViewPasswordItemActivity extends ListActivity {
+public class ViewPasswordItemActivity extends FpmListActivity {
 
 	protected final static String TAG = "ViewPasswordItemActivity";
 	
 	private long id;
-	private BroadcastReceiver fpmCryptReceiver;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -69,33 +66,13 @@ public class ViewPasswordItemActivity extends ListActivity {
 		BaseAdapter adapter = new PasswordItemPropertyListAdapter(this, app, id);
 		this.setTitle(getResources().getString(R.string.app_name) + " - " + title);
 		this.setListAdapter(adapter);
-		
-		// create a reciever to listen for data lock/unlock
-		fpmCryptReceiver = new FpmCryptBroadcastReceiver(adapter);
-		registerReceiver(fpmCryptReceiver, FpmCryptBroadcastReceiver.createIntentFilter());
-	}
-	
-	@Override
-	public void onWindowFocusChanged(boolean hasFocus) {		
-		super.onWindowFocusChanged(hasFocus);
-		// make sure to unlock db if user is viewing app
-		if (hasFocus) {
-	    	FpmApplication app = (FpmApplication) this.getApplication();
-	    	app.openCrypt(this);
-		}
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		unregisterReceiver(fpmCryptReceiver);
 	}
 
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
 		// clicking on the password item, causes the "****" to be replaced with real password.
-		if (position == PasswordItemPropertyListAdapter.POSITION_OF_PASSWORD) {
+		if (PasswordItemPropertyListAdapter.TITLES[position] == R.string.password_item_password) {
 			FpmApplication app = ((FpmApplication) getApplication());
 			PasswordItem item = app.getPasswordItemById(this.id);
 			if (item != null) {
@@ -109,10 +86,8 @@ public class ViewPasswordItemActivity extends ListActivity {
 	}
 	
 	public static class PasswordItemPropertyListAdapter extends BaseAdapter {
-		
-		public static final int POSITION_OF_PASSWORD = 3;
-		
-		private static final  int[] TITLES = {
+				
+		public static final int[] TITLES = {
 			R.string.password_item_title,
 			R.string.password_item_url,
 			R.string.password_item_username,
@@ -123,7 +98,7 @@ public class ViewPasswordItemActivity extends ListActivity {
 			R.string.password_item_launcher,
 		};
 		
-		private static final String[] PROPERTIES = {
+		public static final String[] PROPERTIES = {
 			"title",
 			"url",
 			"user",
@@ -180,8 +155,8 @@ public class ViewPasswordItemActivity extends ListActivity {
 				if (passwordItem == null) {
 					// the db is locked, display a place holder.
 					viewHolder.value.setText("????????");
-				} if (position != POSITION_OF_PASSWORD) {
-					// display the valie
+				} if (TITLES[position] != R.string.password_item_password) {
+					// display the valid
 					viewHolder.value.setText("" + PropertyUtils.getProperty(passwordItem, PROPERTIES[position]));
 				} else {
 					// .getPassword returns the FPM encrypted string. display **** instead.
