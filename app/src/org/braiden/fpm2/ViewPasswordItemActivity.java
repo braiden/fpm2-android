@@ -84,7 +84,12 @@ public class ViewPasswordItemActivity extends FpmListActivity {
 			}
 		}
 	}
-	
+		
+	@Override
+	protected void onFpmLock() {
+		finish();
+	}
+
 	public static class PasswordItemPropertyListAdapter extends BaseAdapter {
 				
 		public static final int[] TITLES = {
