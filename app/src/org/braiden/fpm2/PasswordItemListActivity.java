@@ -46,6 +46,8 @@ import android.widget.TextView;
  */
 public class PasswordItemListActivity extends FpmListActivity {
 	
+	public final static String EXTRA_ID = "id";
+	
 	protected final static String TAG = "PasswordListActivity";
 		
     @Override
@@ -61,7 +63,7 @@ public class PasswordItemListActivity extends FpmListActivity {
 	protected void onListItemClick(ListView listView, View view, int position, long id) {
 		// open the View details activity when an item is selected.
     	Intent intent = new Intent(this, ViewPasswordItemActivity.class);
-    	intent.putExtra("id", id);
+    	intent.putExtra(EXTRA_ID, id);
     	intent.putExtra("title", ((PasswordItem) listView.getItemAtPosition(position)).getTitle());
     	startActivityForResult(intent, 0);
 	}

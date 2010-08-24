@@ -26,11 +26,14 @@ package org.braiden.fpm2;
  *
  */
 
-//import org.braiden.fpm2.PasswordItemListActivity.FpmCryptBroadcastReceiver;
 import org.braiden.fpm2.model.PasswordItem;
 import org.braiden.fpm2.util.PropertyUtils;
 
+import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -47,11 +50,12 @@ import android.widget.TextView;
  *
  */
 
-public class ViewPasswordItemActivity extends FpmListActivity {
+public class ViewPasswordItemActivity extends ListActivity {
 
 	protected final static String TAG = "ViewPasswordItemActivity";
 	
 	private long id;
+	private BroadcastReceiver receiver;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -59,13 +63,35 @@ public class ViewPasswordItemActivity extends FpmListActivity {
 		
 		// get the element id being displayed
 		FpmApplication app = (FpmApplication) this.getApplication();
-		this.id = getIntent().getLongExtra("id", -1L);
+		id = getIntent().getLongExtra(PasswordItemListActivity.EXTRA_ID, -1L);
 		
-		// update the title
-		String title = getIntent().getStringExtra("title");
-		BaseAdapter adapter = new PasswordItemPropertyListAdapter(this, app, id);
-		this.setTitle(getResources().getString(R.string.app_name) + " - " + title);
-		this.setListAdapter(adapter);
+		PasswordItem item = app.getPasswordItemById(id);
+		
+		if (item != null) {
+			// update the title
+			setTitle(getResources().getString(R.string.app_name) + " - " + item.getTitle());
+			// register the list adapter
+			BaseAdapter adapter = new PasswordItemPropertyListAdapter(this, item);
+			setListAdapter(adapter);
+			// register a reciver to close this view if the FPM database is locked
+			receiver = new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					ViewPasswordItemActivity.this.finish();
+				}
+			};
+			registerReceiver(receiver, new IntentFilter(FpmApplication.ACTION_FPM_LOCK));
+		} else {
+			// if the item is null, the fpm db was closed terminate this action
+			// the parent will handle reprompt of passphrase.
+			finish();
+		}
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		unregisterReceiver(receiver);
 	}
 
 	@Override
@@ -83,11 +109,6 @@ public class ViewPasswordItemActivity extends FpmListActivity {
 				}
 			}
 		}
-	}
-		
-	@Override
-	protected void onFpmLock() {
-		finish();
 	}
 
 	public static class PasswordItemPropertyListAdapter extends BaseAdapter {
@@ -115,13 +136,11 @@ public class ViewPasswordItemActivity extends FpmListActivity {
 		};
 		
 		private LayoutInflater layoutInflater;
-		private long passwordItemId;
-		private FpmApplication app;
+		private PasswordItem passwordItem;
 		
-		public PasswordItemPropertyListAdapter(Context context, FpmApplication app, long passwordItemId) {
+		public PasswordItemPropertyListAdapter(Context context, PasswordItem passwordItem) {
 			this.layoutInflater = LayoutInflater.from(context);
-			this.passwordItemId = passwordItemId;
-			this.app = app;
+			this.passwordItem = passwordItem;
 		}
 		
 		@Override
@@ -140,9 +159,7 @@ public class ViewPasswordItemActivity extends FpmListActivity {
 		}
 		
 		@Override
-		public View getView(int position, View convertView, ViewGroup parent) {
-			PasswordItem passwordItem = app.getPasswordItemById(this.passwordItemId);
-			
+		public View getView(int position, View convertView, ViewGroup parent) {			
 			ViewHolder viewHolder = null;
 			
 			if (convertView == null) {
@@ -157,10 +174,7 @@ public class ViewPasswordItemActivity extends FpmListActivity {
 			
 			viewHolder.key.setText(TITLES[position]);
 			try {
-				if (passwordItem == null) {
-					// the db is locked, display a place holder.
-					viewHolder.value.setText("????????");
-				} if (TITLES[position] != R.string.password_item_password) {
+				if (TITLES[position] != R.string.password_item_password) {
 					// display the valid
 					viewHolder.value.setText("" + PropertyUtils.getProperty(passwordItem, PROPERTIES[position]));
 				} else {

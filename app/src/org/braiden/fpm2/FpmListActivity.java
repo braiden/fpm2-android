@@ -61,8 +61,8 @@ public class FpmListActivity extends ListActivity {
 	
 	private LayoutInflater layoutInflater;
 	private FpmBroadcastReceiver broadcastReceiver;
-	private Dialog passphraseDialog = null;
-	private Dialog progressDialog = null;
+	private AlertDialog passphraseDialog = null;
+	private ProgressDialog progressDialog = null;
 	
 	public FpmApplication getFpmApplication() {
 		return (FpmApplication) getApplication();
@@ -113,7 +113,6 @@ public class FpmListActivity extends ListActivity {
 	protected void onFpmLock() {
 		// fpm db lock event is recevied
 		// clear any dialogs, and start prompting for password
-		dismissDialogs();
 		notifyDataSetChanged();
 
 		// schronized to guarentee there is not race where
@@ -123,11 +122,9 @@ public class FpmListActivity extends ListActivity {
 			// if the unlock service is already running, 
 			// jump directly to the progress dialog.
 			if (!FpmUnlockService.isRunning()) {
-				passphraseDialog = createPassphraseDialog();
-				passphraseDialog.show();
+				createPassphraseDialog().show();
 			} else {
-				progressDialog = createProgressDialog();
-				progressDialog.show();
+				createProgressDialog().show();
 			}
 		}
 		
@@ -139,7 +136,6 @@ public class FpmListActivity extends ListActivity {
 		
 		if (passphraseDialog != null) {
 			passphraseDialog.dismiss();
-			passphraseDialog = null;
 		}
 		
 		if (progressDialog != null) {
@@ -161,8 +157,7 @@ public class FpmListActivity extends ListActivity {
 	 * @param passphrase
 	 */
 	protected void onFpmPassphraseOk(String passphrase) {
-		progressDialog = createProgressDialog();
-		progressDialog.show();
+		createProgressDialog().show();
 		Intent serviceIntent = new Intent(this, FpmUnlockService.class);
 		serviceIntent.putExtra(FpmUnlockService.EXTRA_PASSPHRASE, passphrase);
 		startService(serviceIntent);
@@ -193,11 +188,13 @@ public class FpmListActivity extends ListActivity {
 	 * @return
 	 */
 	protected Dialog createProgressDialog() {
-		ProgressDialog dialog = new ProgressDialog(this);
-		dialog.setMessage(getResources().getString(R.string.checking_passphrase));
-		dialog.setCancelable(false);
-		dialog.setIndeterminate(true);
-		return dialog;
+		if (progressDialog == null) {
+			progressDialog = new ProgressDialog(this);
+			progressDialog.setMessage(getResources().getString(R.string.checking_passphrase));
+			progressDialog.setCancelable(false);
+			progressDialog.setIndeterminate(true);
+		}
+		return progressDialog;
 	}
 	
 	/**
@@ -205,27 +202,32 @@ public class FpmListActivity extends ListActivity {
 	 * @return
 	 */
 	protected Dialog createPassphraseDialog() {
-		View textEntryView = layoutInflater.inflate(R.layout.passphrase_dialog, null);
-		final EditText editText = (EditText) textEntryView.findViewById(R.id.password_edit);
-		return new AlertDialog.Builder(this)
-        	.setTitle(R.string.passphrase_dialog_title)
-        	.setView(textEntryView)
-        	.setCancelable(false)
-        	.setPositiveButton(R.string.passphrase_dialog_ok, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.dismiss();
-					onFpmPassphraseOk(editText.getText().toString());
-				}
-			})
-        	.setNegativeButton(R.string.passphrase_dialog_cancel, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.dismiss();
-					onFpmPassphraseCancel();
-				}
-			})
+		if (passphraseDialog == null ) {		
+			View textEntryView = layoutInflater.inflate(R.layout.passphrase_dialog, null);
+			final EditText editText = (EditText) textEntryView.findViewById(R.id.password_edit);
+			passphraseDialog =  new AlertDialog.Builder(this)
+        		.setTitle(R.string.passphrase_dialog_title)
+        		.setView(textEntryView)
+        		.setCancelable(false)
+        		.setPositiveButton(R.string.passphrase_dialog_ok, new DialogInterface.OnClickListener() {
+        			@Override
+        			public void onClick(DialogInterface dialog, int which) {
+        				dialog.dismiss();
+        				String passphrase = editText.getText().toString();
+        				editText.setText("");
+        				onFpmPassphraseOk(passphrase);
+        			}
+        		})
+        		.setNegativeButton(R.string.passphrase_dialog_cancel, new DialogInterface.OnClickListener() {
+        			@Override
+        			public void onClick(DialogInterface dialog, int which) {
+        				dialog.dismiss();
+        				onFpmPassphraseCancel();
+        			}
+        		})
         	.create();
+		}
+		return passphraseDialog;
 	}
 	
 	/**
