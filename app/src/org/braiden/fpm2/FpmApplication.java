@@ -54,7 +54,7 @@ public class FpmApplication extends Application {
 	public static final String ACTION_FPM_LOCK = "org.braiden.fpm2.FPM_LOCKED";
 	
 	// default time, in milliseconds, before the FPM database is locked
-	public static final long FPM_AUTO_LOCK_MILLISECONDS = 5L * 1000L;
+	public static final long FPM_AUTO_LOCK_MILLISECONDS = 60L * 1000L;
 	// default location if the FPM databased (XML) file
 	public static final String FPM_FILE = "/sdcard/fpm";
 	
