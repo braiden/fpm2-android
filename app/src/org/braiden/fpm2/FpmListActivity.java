@@ -112,7 +112,6 @@ public class FpmListActivity extends ListActivity {
 	 */
 	protected void onFpmLock() {
 		// fpm db lock event is recevied
-		// clear any dialogs, and start prompting for password
 		notifyDataSetChanged();
 
 		// schronized to guarentee there is not race where
