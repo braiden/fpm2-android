@@ -65,6 +65,14 @@ public class ViewPasswordItemActivity extends ListActivity {
 		FpmApplication app = (FpmApplication) this.getApplication();
 		id = getIntent().getLongExtra(PasswordItemListActivity.EXTRA_ID, -1L);
 		
+		receiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				ViewPasswordItemActivity.this.finish();
+			}
+		};
+		registerReceiver(receiver, new IntentFilter(FpmApplication.ACTION_FPM_LOCK));
+		
 		PasswordItem item = app.getPasswordItemById(id);
 		
 		if (item != null) {
@@ -74,13 +82,6 @@ public class ViewPasswordItemActivity extends ListActivity {
 			BaseAdapter adapter = new PasswordItemPropertyListAdapter(this, item);
 			setListAdapter(adapter);
 			// register a reciver to close this view if the FPM database is locked
-			receiver = new BroadcastReceiver() {
-				@Override
-				public void onReceive(Context context, Intent intent) {
-					ViewPasswordItemActivity.this.finish();
-				}
-			};
-			registerReceiver(receiver, new IntentFilter(FpmApplication.ACTION_FPM_LOCK));
 		} else {
 			// if the item is null, the fpm db was closed terminate this action
 			// the parent will handle reprompt of passphrase.
