@@ -19,7 +19,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
-            android:title="@string/preferences">
+            android:title="@string/general">
                 
         <ListPreference
                 android:key="fpm_autolock"                

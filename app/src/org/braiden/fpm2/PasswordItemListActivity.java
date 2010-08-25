@@ -72,6 +72,9 @@ public class PasswordItemListActivity extends FpmListActivity {
 			case R.id.main_menu_prefs:
 				startActivity(new Intent(this, FpmPreferencesActivity.class));
 				return true;
+			case R.id.main_menu_lock:
+				getFpmApplication().closeCrypt();
+				return true;
 			default:
 				return super.onOptionsItemSelected(item);
 		}
