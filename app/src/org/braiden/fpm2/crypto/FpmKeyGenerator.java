@@ -1,5 +1,7 @@
 package org.braiden.fpm2.crypto;
 
+import java.security.GeneralSecurityException;
+
 /*
  * Copyright (c) 2010 Braiden Kindt
  *
@@ -36,6 +38,6 @@ public interface FpmKeyGenerator {
 	 * @return
 	 * @throws Exception
 	 */
-	byte[] generateKey(String secret, String salt) throws Exception;
+	byte[] generateKey(String secret, String salt) throws GeneralSecurityException;
 
 }

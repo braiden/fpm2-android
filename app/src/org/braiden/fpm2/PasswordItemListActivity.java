@@ -32,6 +32,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -49,15 +51,31 @@ public class PasswordItemListActivity extends FpmListActivity {
 	public final static String EXTRA_ID = "id";
 	
 	protected final static String TAG = "PasswordListActivity";
-		
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
-    	super.onCreate(savedInstanceState);
-    	
+    	super.onCreate(savedInstanceState);    	
     	// register the adapter for building view for each element of our list
     	BaseAdapter adapter = new FpmCryptListAdapter(this);
     	setListAdapter(adapter);
     }
+    
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.main_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			case R.id.main_menu_prefs:
+				startActivity(new Intent(this, FpmPreferencesActivity.class));
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
 
 	@Override
 	protected void onListItemClick(ListView listView, View view, int position, long id) {

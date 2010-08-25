@@ -18,6 +18,8 @@
 
 		<activity android:name=".ViewPasswordItemActivity" />
 		
+		<activity android:name=".FpmPreferencesActivity" />
+		
 		<service android:name=".FpmListActivity$FpmUnlockService" />
 		
     </application>

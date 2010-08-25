@@ -26,12 +26,16 @@ package org.braiden.fpm2;
  *
  */
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.crypto.NoSuchPaddingException;
 
 import org.braiden.fpm2.crypto.FpmCipher;
 import org.braiden.fpm2.crypto.FpmKeyGenerator;
@@ -43,6 +47,7 @@ import org.braiden.fpm2.model.LauncherItem;
 import org.braiden.fpm2.model.PasswordItem;
 import org.braiden.fpm2.util.PropertyUtils;
 import org.braiden.fpm2.xml.FpmFileXmlParser;
+import org.xml.sax.SAXException;
 
 import android.util.Log;
 
@@ -72,9 +77,16 @@ public class FpmCrypt {
 	 * 
 	 * @param inputStream open inputStream positioned at start of file.
 	 * @param password passphrase used to generate key for reading file
+	 * @throws SAXException 
+	 * @throws IOException 
+	 * @throws NoSuchPaddingException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws FpmCipherUnsupportedException 
+	 * @throws FpmPassphraseInvalidException 
 	 * @throws Exception in case of bad password, unsupported file format, cipher, or IO error
 	 */
-	public void open(InputStream inputStream, String password) throws Exception {
+	public void open(InputStream inputStream, String password) 	throws IOException, SAXException, 
+			GeneralSecurityException, FpmCipherUnsupportedException, FpmPassphraseInvalidException {
 		try {
 			// build data objects form xml
 			fpmFile = FpmFileXmlParser.parse(inputStream);
@@ -85,7 +97,7 @@ public class FpmCrypt {
 			
 			// can't go further if cipher of key gen is null (this fpm file format is not supported).
 			if (cipher == null || keyGenerator == null) {
-				throw new Exception("FPM Cipher \"" + fpmFile.getKeyInfo().getCipher() + "\" is not supported.");
+				throw new FpmCipherUnsupportedException("FPM Cipher \"" + fpmFile.getKeyInfo().getCipher() + "\" is not supported.");
 			}
 			// build a key (byte[]) from the provided password.
 			this.key = keyGenerator.generateKey(password, fpmFile.getKeyInfo().getSalt());
@@ -95,11 +107,23 @@ public class FpmCrypt {
 			
 			// verify data decrypted ok, if not, key must be invalid.
 			if (!verifyVstring()) {
-				throw new Exception("Password invalid.");
+				throw new FpmPassphraseInvalidException("Password invalid.");
 			}
 			
 			isOpen = true;
-		} catch (Exception e) {
+		} catch (IOException e) {
+			close();
+			throw e;
+		} catch (SAXException e) {
+			close();
+			throw e;
+		} catch (GeneralSecurityException e) {
+			close();
+			throw e;
+		} catch (FpmCipherUnsupportedException e) {
+			close();
+			throw e;
+		} catch (FpmPassphraseInvalidException e) {
 			close();
 			throw e;
 		}
@@ -135,7 +159,7 @@ public class FpmCrypt {
 	 * @return
 	 * @throws Exception
 	 */
-	public String decrypt(String encryptedData) throws Exception {
+	public String decrypt(String encryptedData) throws GeneralSecurityException {
 		return cipher.decrypt(key, encryptedData);
 	}
 	
@@ -146,7 +170,7 @@ public class FpmCrypt {
 	 * @return
 	 * @throws Exception
 	 */
-	public String encrypt(String clearTextData) throws Exception {
+	public String encrypt(String clearTextData) throws GeneralSecurityException {
 		return cipher.encrypt(key, clearTextData);
 	}
 
@@ -205,7 +229,7 @@ public class FpmCrypt {
 	 * @return
 	 * @throws NoSuchAlgorithmException
 	 */
-	protected boolean verifyVstring() throws NoSuchAlgorithmException {
+	protected boolean verifyVstring() throws GeneralSecurityException {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return aesVerifyVstring();
 		}
@@ -218,7 +242,7 @@ public class FpmCrypt {
 	 * @return
 	 * @throws NoSuchAlgorithmException
 	 */
-	protected boolean aesVerifyVstring() throws NoSuchAlgorithmException {
+	protected boolean aesVerifyVstring() throws GeneralSecurityException {
 		MessageDigest digest = MessageDigest.getInstance(AES_VSTRING_HASH_FUNCTION);
 		for (PasswordItem item : fpmFile.getPasswordItems()) {
 			StringBuffer input = new StringBuffer();
@@ -250,9 +274,11 @@ public class FpmCrypt {
 	 * 
 	 * @param fpmFile
 	 * @return
+	 * @throws NoSuchPaddingException 
+	 * @throws NoSuchAlgorithmException 
 	 * @throws Exception
 	 */
-	protected static FpmCipher createCipher(FpmFile fpmFile) throws Exception {
+	protected static FpmCipher createCipher(FpmFile fpmFile) throws GeneralSecurityException {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return new JCEFpmCipher();
 		}
@@ -267,11 +293,30 @@ public class FpmCrypt {
 	 * @return
 	 * @throws Exception
 	 */
-	protected static FpmKeyGenerator createKeyGenerator(FpmFile fpmFile) throws Exception {
+	protected static FpmKeyGenerator createKeyGenerator(FpmFile fpmFile) throws GeneralSecurityException {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return new PBKDF2FpmKeyGenerator();
 		}
 		return null;
 	}
+	
+	public static class FpmCipherUnsupportedException extends Exception {
 
+		private static final long serialVersionUID = 5884333303992753439L;
+
+		public FpmCipherUnsupportedException(String msg) {
+			super(msg);
+		}
+	}
+	
+	public static class FpmPassphraseInvalidException extends Exception {
+		
+		private static final long serialVersionUID = -6602099021510293708L;
+
+		public FpmPassphraseInvalidException(String msg) {
+			super(msg);
+		}
+		
+	}
+	
 }

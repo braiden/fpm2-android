@@ -26,7 +26,7 @@ package org.braiden.fpm2.crypto;
  *
  */
 
-import java.security.NoSuchAlgorithmException;
+import java.security.GeneralSecurityException;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -48,16 +48,16 @@ public class PBKDF2FpmKeyGenerator implements FpmKeyGenerator {
 	
 	private PBKDF2KeyGenerator keyGenerator;
 	
-	public PBKDF2FpmKeyGenerator() throws NoSuchAlgorithmException {
+	public PBKDF2FpmKeyGenerator() throws GeneralSecurityException {
 		this(DEFAULT_KEY_LENGTH_BYTES, DEFAULT_ITERATIONS, DEFAULT_HMAC_ALGORITH);
 	}
 	
-	public PBKDF2FpmKeyGenerator(int keyLength, int iterations, String hmac) throws NoSuchAlgorithmException {
+	public PBKDF2FpmKeyGenerator(int keyLength, int iterations, String hmac) throws GeneralSecurityException {
 		keyGenerator = new PBKDF2KeyGenerator(keyLength, iterations, hmac);
 	}
 
 	@Override
-	public byte[] generateKey(String secret, String salt) throws Exception {
+	public byte[] generateKey(String secret, String salt) throws GeneralSecurityException {
 		byte[] saltBytes = StringUtils.substring(salt, 0, keyGenerator.getKeyLengthBytes() / 2).getBytes();
 		return keyGenerator.generateKey(secret, saltBytes);
 	}

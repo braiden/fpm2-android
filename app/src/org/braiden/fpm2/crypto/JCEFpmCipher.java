@@ -26,10 +26,9 @@ package org.braiden.fpm2.crypto;
  *
  */
 
-import java.security.NoSuchAlgorithmException;
+import java.security.GeneralSecurityException;
 
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -51,16 +50,16 @@ public class JCEFpmCipher implements FpmCipher {
 
 	private Cipher cipher;
 	
-	public JCEFpmCipher() throws NoSuchAlgorithmException, NoSuchPaddingException {
+	public JCEFpmCipher() throws GeneralSecurityException {
 		this(DEFAULT_CIPHER);
 	}
 	
-	public JCEFpmCipher(String cipherName) throws NoSuchAlgorithmException, NoSuchPaddingException {
+	public JCEFpmCipher(String cipherName) throws GeneralSecurityException {
 		this.cipher = Cipher.getInstance(cipherName);
 	}
 	
 	@Override
-	public byte[] decryptRaw(byte[] key, String encryptedData) throws Exception {
+	public byte[] decryptRaw(byte[] key, String encryptedData) throws GeneralSecurityException {
 		SecretKey cipherKey = new SecretKeySpec(key, cipher.getAlgorithm());
 		cipher.init(Cipher.DECRYPT_MODE, cipherKey);
 		byte[] result = cipher.doFinal(FpmCryptoUtils.decodeString(encryptedData));
@@ -68,19 +67,19 @@ public class JCEFpmCipher implements FpmCipher {
 	}
 
 	@Override
-	public String decrypt(byte[] key, String encryptedData) throws Exception {
+	public String decrypt(byte[] key, String encryptedData) throws GeneralSecurityException {
 		byte[] result = decryptRaw(key, encryptedData);
 		int idxOfNil = ArrayUtils.indexOf(result, (byte)0);
 		return new String(result, 0, idxOfNil >= 0 ? idxOfNil : result.length);
 	}
 
 	@Override
-	public String encrypt(byte[] key, String plainText) throws Exception {
+	public String encrypt(byte[] key, String plainText) throws GeneralSecurityException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public String encryptRaw(byte[] key, byte[] clear) throws Exception {
+	public String encryptRaw(byte[] key, byte[] clear) throws GeneralSecurityException {
 		throw new UnsupportedOperationException();
 	}
 

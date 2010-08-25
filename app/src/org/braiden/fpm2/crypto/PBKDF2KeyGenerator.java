@@ -26,13 +26,11 @@ package org.braiden.fpm2.crypto;
  *
  */
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
-import javax.crypto.ShortBufferException;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
@@ -51,13 +49,13 @@ public class PBKDF2KeyGenerator {
 	private int iterations;
 	private Mac hmac;
 	
-	public PBKDF2KeyGenerator(int keyLengthBytes, int iterations, String hmacAlgorith) throws NoSuchAlgorithmException	{
+	public PBKDF2KeyGenerator(int keyLengthBytes, int iterations, String hmacAlgorith) throws GeneralSecurityException	{
 		this.keyLengthBytes = keyLengthBytes;
 		this.iterations = iterations;
 		this.hmac = Mac.getInstance(hmacAlgorith);
 	}
 	
-	public byte[] generateKey(String secret, byte[] salt) throws InvalidKeyException, ShortBufferException, IllegalStateException {
+	public byte[] generateKey(String secret, byte[] salt) throws GeneralSecurityException {
 		SecretKey key = new SecretKeySpec(secret.getBytes(), hmac.getAlgorithm());
 		byte[] result = new byte[keyLengthBytes];
 		byte[] initialHashInput = new byte[salt.length + 4];

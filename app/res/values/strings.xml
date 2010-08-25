@@ -18,4 +18,11 @@
     <string name="passphrase_dialog_cancel">Cancel</string>
     
     <string name="checking_passphrase">Checking passphrase...</string>
+    
+    <string name="preferences">Settings</string>
+    
+    <string name="pref_autolock">Auto-lock FPM</string>
+    <string name="pref_autolock_summary">How long after entering passphrase should FPM database remain open.</string>
+    <string name="pref_autolock_after">Lock After...</string>
+    
 </resources>

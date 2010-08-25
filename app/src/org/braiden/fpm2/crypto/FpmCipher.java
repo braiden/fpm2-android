@@ -1,5 +1,7 @@
 package org.braiden.fpm2.crypto;
 
+import java.security.GeneralSecurityException;
+
 /*
  * Copyright (c) 2010 Braiden Kindt
  *
@@ -37,7 +39,7 @@ public interface FpmCipher {
 	 * @return
 	 * @throws Exception
 	 */
-	String decrypt(byte[] key, String encryptedData) throws Exception;
+	String decrypt(byte[] key, String encryptedData) throws GeneralSecurityException;
 	
 	/**
 	 * Given a key, and FPM encoded ecrypted String, return a byte[]
@@ -48,7 +50,7 @@ public interface FpmCipher {
 	 * @return
 	 * @throws Exception
 	 */
-	byte[] decryptRaw(byte[] key, String encryptedData) throws Exception;
+	byte[] decryptRaw(byte[] key, String encryptedData) throws GeneralSecurityException;
 	
 	/**
 	 * Given key, and plain text string encrypt to FPM2's rules.
@@ -60,7 +62,7 @@ public interface FpmCipher {
 	 * @return
 	 * @throws Exception
 	 */
-	String encrypt(byte[] key, String plainText) throws Exception;
+	String encrypt(byte[] key, String plainText) throws GeneralSecurityException;
 	
 	/**
 	 * Rotate and encode the given byte[] using FPM's cipher.
@@ -70,6 +72,6 @@ public interface FpmCipher {
 	 * @return
 	 * @throws Exception
 	 */
-	String encryptRaw(byte[] key, byte clear[]) throws Exception;
+	String encryptRaw(byte[] key, byte clear[]) throws GeneralSecurityException;
 	
 }
