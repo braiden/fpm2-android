@@ -28,4 +28,11 @@
     <string name="pref_autolock_summary">How long after entering passphrase should FPM database remain open.</string>
     <string name="pref_autolock_after">Lock After...</string>
     
+    <string name="exception_file_not_found">FPM file not found.</string>
+    <string name="exception_io">I/O Error reading file.</string>
+    <string name="exception_sax">XML parsing error.</string>
+    <string name="exception_jce">Unable to create required cipher.</string>
+    <string name="exception_fpm_unsupported">Version of FPM unsupported.</string>
+    <string name="exception_fpm_passphrase">Invalid passphrase.</string>
+     
 </resources>

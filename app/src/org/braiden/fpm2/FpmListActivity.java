@@ -38,7 +38,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Adapter;
@@ -57,7 +56,6 @@ import android.widget.EditText;
 public class FpmListActivity extends ListActivity {
 	
 	private static final int FPM_PASSPHRASE_CANCEL = 0xFFFFFF00;
-	private static final String TAG = "FpmActivity";
 	
 	private LayoutInflater layoutInflater;
 	private FpmBroadcastReceiver broadcastReceiver;
@@ -91,6 +89,28 @@ public class FpmListActivity extends ListActivity {
 		}
 	}
 
+	protected void onFpmError(int msg) {
+		dismissDialogs();
+		
+		if (msg != 0) {
+			new AlertDialog.Builder(this)
+				.setTitle(msg)
+				.setIcon(android.R.drawable.ic_dialog_alert)
+				.setCancelable(false)
+				.setPositiveButton(R.string.passphrase_dialog_ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						onFpmLock();
+					}
+				})
+				.create()
+				.show();
+		} else {
+			onFpmLock();
+		}
+	}
+	
 	/**
 	 * Callback when the database is unlocked an availible.
 	 * sub-classes can override this method but, should
@@ -271,16 +291,9 @@ public class FpmListActivity extends ListActivity {
 			new Thread() {
 				@Override
 				public void run() {
-					
-					try {
-						app.openCrypt(passphrase);
-					} catch (Exception e) {
-						Log.w(TAG, "Failed to unlock FpmCrypt.", e);
-					}
-					
+					app.openCrypt(passphrase);
 					setRunning(false);
 					app.broadcastState();
-					
 					stopSelf();
 				}
 			}.start();
@@ -307,6 +320,7 @@ public class FpmListActivity extends ListActivity {
 			IntentFilter filter = new IntentFilter();
 			filter.addAction(FpmApplication.ACTION_FPM_LOCK);
 			filter.addAction(FpmApplication.ACTION_FPM_UNLOCK);
+			filter.addAction(FpmApplication.ACTION_FPM_FAIL);
 			return filter;
 		}
 		
@@ -316,6 +330,8 @@ public class FpmListActivity extends ListActivity {
 				activity.onFpmUnlock();
 			} else if (FpmApplication.ACTION_FPM_LOCK.equals(intent.getAction())) {
 				activity.onFpmLock();
+			} else if (FpmApplication.ACTION_FPM_FAIL.equals(intent.getAction())) {
+				activity.onFpmError(intent.getIntExtra(FpmApplication.EXTRA_MSG, 0));
 			}
 		}
 		

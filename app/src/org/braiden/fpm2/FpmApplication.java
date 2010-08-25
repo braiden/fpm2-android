@@ -27,12 +27,18 @@ package org.braiden.fpm2;
  */
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.braiden.fpm2.FpmCrypt.FpmCipherUnsupportedException;
+import org.braiden.fpm2.FpmCrypt.FpmPassphraseInvalidException;
 import org.braiden.fpm2.model.PasswordItem;
+import org.xml.sax.SAXException;
 
 import android.app.Application;
 import android.content.Intent;
@@ -55,8 +61,12 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	public static final String ACTION_FPM_UNLOCK = "org.braiden.fpm2.FPM_UNLOCKED";
 	// Action (Intent) published whenever the FPM db is locked
 	public static final String ACTION_FPM_LOCK = "org.braiden.fpm2.FPM_LOCKED";
+	// Action (Intent) published when the FPM database has failed to open
+	public static final String ACTION_FPM_FAIL = "org.braiden.fpm2.FPM_FAILED";
 	
 	public static final String PREF_AUTOLOCK = "fpm_autolock";
+	
+	public static final String EXTRA_MSG = "org.braiden.fpm2.EXTRA_MESSAGE";
 	
 	// default location if the FPM databased (XML) file
 	public static final String FPM_FILE = "/sdcard/fpm";
@@ -67,6 +77,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	private Timer autoLockTimer = null;
 	private long autoLockMilliseconds = -1;
 	private SharedPreferences prefs;
+	private int failureMsg = 0;
 	
 	@Override
 	public void onCreate() {
@@ -95,7 +106,17 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	}
 	
 	public void broadcastState() {
-		Intent broadcast = new Intent(isCryptOpen() ? FpmApplication.ACTION_FPM_UNLOCK : FpmApplication.ACTION_FPM_LOCK);
+		String state = null;
+		if (isCryptFailed()) {
+			state = ACTION_FPM_FAIL;
+		} else if (!isCryptOpen()) {
+			state = ACTION_FPM_LOCK;
+		} else {
+			state = ACTION_FPM_UNLOCK;
+		}
+		
+		Intent broadcast = new Intent(state);
+		broadcast.putExtra(EXTRA_MSG, failureMsg);
 		sendBroadcast(broadcast);		
 	}
 	
@@ -103,24 +124,38 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	 * Try to unlock the store. This can take a while
 	 * and must be called in seperate thread / store
 	 * @param passphrase
+	 * @throws FpmPassphraseInvalidException 
+	 * @throws FpmCipherUnsupportedException 
+	 * @throws GeneralSecurityException 
+	 * @throws SAXException 
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
 	 * @throws Exception
 	 */
 	synchronized
-	public void openCrypt(String passphrase) throws Exception {
-		boolean success = true;
+	public void openCrypt(String passphrase) {
 		try {
 			fpmCrypt.open(new FileInputStream(FPM_FILE), passphrase);
-		} catch (Exception e) {
-			success = false;
-			throw e;
-		} finally {
-			// setup the timer to automatically re-lock 
-			// the password database. Can't trust android
-			// to do it, don't know when the OS is going
-			// to purge the task.
-			if (success) {			
-				scheduleAutoLock();
-			}
+			scheduleAutoLock();
+			failureMsg = 0;
+		} catch (FileNotFoundException e) {
+			failureMsg = R.string.exception_file_not_found;
+			Log.w(TAG, "Failed to open FPM database.", e);
+		} catch (IOException e) {
+			failureMsg = R.string.exception_io;
+			Log.w(TAG, "Failed to open FPM database.", e);
+		} catch (SAXException e) {
+			failureMsg = R.string.exception_sax;
+			Log.w(TAG, "Failed to open FPM database.", e);
+		} catch (GeneralSecurityException e) {
+			failureMsg = R.string.exception_jce;
+			Log.w(TAG, "Failed to open FPM database.", e);
+		} catch (FpmCipherUnsupportedException e) {
+			failureMsg = R.string.exception_fpm_unsupported;
+			Log.w(TAG, "Failed to open FPM database.", e);
+		} catch (FpmPassphraseInvalidException e) {
+			//failureMsg = R.string.exception_fpm_passphrase;
+			Log.w(TAG, "Failed to open FPM database.", e);
 		}
 	}
 	
@@ -137,7 +172,15 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	 * @return
 	 */
 	public boolean isCryptOpen() {
-		return fpmCrypt.isOpen();
+		return failureMsg == 0 && fpmCrypt.isOpen();
+	}
+	
+	/**
+	 * True if the most recent attempt to open crypt resulted in a failure.
+	 * @return
+	 */
+	public boolean isCryptFailed() {
+		return failureMsg != 0;
 	}
 
 	/**

@@ -126,6 +126,9 @@ public class FpmCrypt {
 		} catch (FpmPassphraseInvalidException e) {
 			close();
 			throw e;
+		} catch (IllegalArgumentException e) {
+			close();
+			throw new FpmPassphraseInvalidException(e);
 		}
 	}
 	
@@ -313,6 +316,10 @@ public class FpmCrypt {
 		
 		private static final long serialVersionUID = -6602099021510293708L;
 
+		public FpmPassphraseInvalidException(Throwable rootCause) {
+			super(rootCause);
+		}
+		
 		public FpmPassphraseInvalidException(String msg) {
 			super(msg);
 		}
