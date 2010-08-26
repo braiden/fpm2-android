@@ -31,12 +31,12 @@
     <string name="exception_file_not_found">FPM file not found.</string>
     <string name="exception_io">I/O Error reading file.</string>
     <string name="exception_sax">XML parsing error.</string>
-    <string name="exception_jce">Unable to create required cipher.</string>
-    <string name="exception_fpm_unsupported">Version of FPM unsupported.</string>
+    <string name="exception_jce">JCE Failure.</string>
+    <string name="exception_fpm_unsupported">FPM Version unsupported.</string>
     <string name="exception_fpm_passphrase">Invalid passphrase.</string>
 
 	<string name="exception_file_not_found_extra">Make sure that you\'ve copied ~/.fpm/fpm file from your PC to the root of your SD card.</string>
-    <string name="exception_jce_extra">A required java cryptography extension provide could not be found. Maybe an unsupported version on android?</string>
-    <string name="exception_fpm_unsupported_extra">Your FPM file uses a cipher not supported by this program. Only "AES-256" is currently supported.</string>
+    <string name="exception_jce_extra">A required java cryptography (JCE) extension provider could not be found. Maybe an unsupported version on android?</string>
+    <string name="exception_fpm_unsupported_extra">Your FPM file uses a cipher not currently supported. Only AES-256 is supported.</string>
     
 </resources>
