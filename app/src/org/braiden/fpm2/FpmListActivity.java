@@ -221,7 +221,7 @@ public class FpmListActivity extends ListActivity {
 			passphraseDialog =  new AlertDialog.Builder(this)
         		.setTitle(R.string.passphrase_dialog_title)
         		.setView(textEntryView)
-        		.setCancelable(false)
+        		.setCancelable(true)
         		.setPositiveButton(R.string.passphrase_dialog_ok, new DialogInterface.OnClickListener() {
         			@Override
         			public void onClick(DialogInterface dialog, int which) {
@@ -238,7 +238,14 @@ public class FpmListActivity extends ListActivity {
         				onFpmPassphraseCancel();
         			}
         		})
-        	.create();
+        		.setOnCancelListener(new DialogInterface.OnCancelListener() {
+					@Override
+					public void onCancel(DialogInterface dialog) {
+						dialog.dismiss();
+						onFpmPassphraseCancel();
+					}
+				})
+				.create();
 		}
 		return passphraseDialog;
 	}
