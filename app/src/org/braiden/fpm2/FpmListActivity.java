@@ -28,16 +28,15 @@ package org.braiden.fpm2;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.IntentService;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Adapter;
@@ -92,7 +91,7 @@ public class FpmListActivity extends ListActivity {
 	protected void onFpmError(int msg) {
 		dismissDialogs();
 		
-		if (msg != 0) {
+		if (msg != 0 && msg != R.string.exception_fpm_passphrase) {
 			new AlertDialog.Builder(this)
 				.setTitle(msg)
 				.setIcon(android.R.drawable.ic_dialog_alert)
@@ -134,13 +133,8 @@ public class FpmListActivity extends ListActivity {
 		// fpm db lock event is recevied
 		notifyDataSetChanged();
 
-		// schronized to guarentee there is not race where
-		// progress dialog is created just after the service
-		// finishes
-		synchronized (FpmUnlockService.class) {
-			// if the unlock service is already running, 
-			// jump directly to the progress dialog.
-			if (!FpmUnlockService.isRunning()) {
+		synchronized (getFpmApplication()) {
+			if (getFpmApplication().getCryptState() != FpmApplication.STATE_BUSY) {
 				createPassphraseDialog().show();
 			} else {
 				createProgressDialog().show();
@@ -258,46 +252,20 @@ public class FpmListActivity extends ListActivity {
 	 * @author braiden
 	 *
 	 */
-	public static class FpmUnlockService extends Service {
+	public static class FpmUnlockService extends IntentService {
 		
 		public static final String EXTRA_PASSPHRASE = "passphrase";
-
-		private static boolean running = false;
 		
-		private String passphrase;
-		private FpmApplication app;
-
-		synchronized
-		public static boolean isRunning() {
-			return running;
+		public FpmUnlockService() {
+			super("FpmUnlockService");
 		}
-
-		synchronized
-		public static void setRunning(boolean running) {
-			FpmUnlockService.running = running;
-		}
-
+		
 		@Override
-		public IBinder onBind(Intent intent) {
-			return null;
-		}
-
-		@Override
-		public void onStart(Intent intent, int startId) {
-			setRunning(true);
-			super.onStart(intent, startId);
-			app = (FpmApplication) getApplication();
-			passphrase = intent.getStringExtra(EXTRA_PASSPHRASE);
-			new Thread() {
-				@Override
-				public void run() {
-					app.openCrypt(passphrase);
-					setRunning(false);
-					app.broadcastState();
-					stopSelf();
-				}
-			}.start();
-		}
+		protected void onHandleIntent(Intent intent) {
+			FpmApplication app = (FpmApplication) getApplication();
+			String passphrase = intent.getStringExtra(EXTRA_PASSPHRASE);
+			app.openCrypt(passphrase);
+		}		
 		
 	}
 	

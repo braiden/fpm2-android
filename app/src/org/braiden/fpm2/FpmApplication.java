@@ -64,6 +64,15 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	// Action (Intent) published when the FPM database has failed to open
 	public static final String ACTION_FPM_FAIL = "org.braiden.fpm2.FPM_FAILED";
 	
+	// the crypt is locked, and must be openned with passphrase before access
+	public static final int STATE_LOCKED = 0;
+	// the crypt is unlocked, data can be read, and passwords can be decrypted
+	public static final int STATE_UNLOCKED = 1;
+	// the most recent attempt to access the crypt failed
+	public static final int STATE_FAILED = 2;
+	// the crypt is currently locked with an unlock operation in progress
+	public static final int STATE_BUSY = 3;
+	
 	public static final String PREF_AUTOLOCK = "fpm_autolock";
 	
 	public static final String EXTRA_MSG = "org.braiden.fpm2.EXTRA_MESSAGE";
@@ -75,14 +84,13 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	
 	private FpmCrypt fpmCrypt = new FpmCrypt();
 	private Timer autoLockTimer = null;
-	private long autoLockMilliseconds = -1;
 	private SharedPreferences prefs;
 	private int failureMsg = 0;
+	private int state = STATE_LOCKED;
 	
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		autoLockMilliseconds = getAutoLockMilliseconds();
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
@@ -97,47 +105,41 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	}
 	
 	@Override
-	synchronized
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (PREF_AUTOLOCK.equals(key)) {
-			autoLockMilliseconds = getAutoLockMilliseconds();
 			scheduleAutoLock();
 		}
 	}
 	
-	public void broadcastState() {
-		String state = null;
-		if (isCryptFailed()) {
-			state = ACTION_FPM_FAIL;
-		} else if (!isCryptOpen()) {
-			state = ACTION_FPM_LOCK;
-		} else {
-			state = ACTION_FPM_UNLOCK;
-		}
-		
-		Intent broadcast = new Intent(state);
-		broadcast.putExtra(EXTRA_MSG, failureMsg);
-		sendBroadcast(broadcast);		
+	/**
+	 * 
+	 * Get the state of the FPM database
+	 * @return STATE_LOCKED, STATE_UNLOCKED, STATE_ERROR, STATE_BUSY
+	 * 
+	 */
+	synchronized
+	public int getCryptState() {
+		return state;
+	}
+	
+	synchronized
+	public boolean isCryptOpen() {
+		return state == STATE_UNLOCKED;
 	}
 	
 	/**
 	 * Try to unlock the store. This can take a while
 	 * and must be called in seperate thread / store
 	 * @param passphrase
-	 * @throws FpmPassphraseInvalidException 
-	 * @throws FpmCipherUnsupportedException 
-	 * @throws GeneralSecurityException 
-	 * @throws SAXException 
-	 * @throws IOException 
-	 * @throws FileNotFoundException 
-	 * @throws Exception
 	 */
-	synchronized
 	public void openCrypt(String passphrase) {
+		int failureMsg = 0;
 		try {
+			synchronized (this) {
+				state = STATE_BUSY;
+			}
 			fpmCrypt.open(new FileInputStream(FPM_FILE), passphrase);
 			scheduleAutoLock();
-			failureMsg = 0;
 		} catch (FileNotFoundException e) {
 			failureMsg = R.string.exception_file_not_found;
 			Log.w(TAG, "Failed to open FPM database.", e);
@@ -154,33 +156,27 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 			failureMsg = R.string.exception_fpm_unsupported;
 			Log.w(TAG, "Failed to open FPM database.", e);
 		} catch (FpmPassphraseInvalidException e) {
-			//failureMsg = R.string.exception_fpm_passphrase;
+			failureMsg = R.string.exception_fpm_passphrase;
 			Log.w(TAG, "Failed to open FPM database.", e);
 		}
+		
+		synchronized (this) {
+			this.failureMsg = failureMsg;
+			state = failureMsg == 0 ? STATE_UNLOCKED : STATE_FAILED;
+			broadcastState();
+		}
+		
 	}
 	
 	/**
 	 * Close the FPM datastore. User will need to enter
 	 * passphrase again, before accessing any data. 
 	 */
+	synchronized
 	public void closeCrypt() {
 		fpmCrypt.close();
-	}
-	
-	/**
-	 * True if the FPM store is open and unencrypted
-	 * @return
-	 */
-	public boolean isCryptOpen() {
-		return failureMsg == 0 && fpmCrypt.isOpen();
-	}
-	
-	/**
-	 * True if the most recent attempt to open crypt resulted in a failure.
-	 * @return
-	 */
-	public boolean isCryptFailed() {
-		return failureMsg != 0;
+		state = STATE_LOCKED;
+		broadcastState();
 	}
 
 	/**
@@ -189,6 +185,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	 * @param s
 	 * @return
 	 */
+	synchronized
 	public String decrypt(String s) {
 		if (isCryptOpen()) {
 			try {
@@ -207,6 +204,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	 * 
 	 * @return
 	 */
+	synchronized
 	public List<PasswordItem> getPasswordItems() {
 		if (isCryptOpen()) {
 			return fpmCrypt.getFpmFile().getPasswordItems();
@@ -221,6 +219,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	 * @param id
 	 * @return
 	 */
+	synchronized
 	public PasswordItem getPasswordItemById(long id) {
 		List<PasswordItem> items = getPasswordItems();
 		if (id >= items.size()) {
@@ -230,8 +229,11 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 		}
 	}
 	
+	synchronized
 	private void scheduleAutoLock() {
 		if (isCryptOpen()) {
+			long autoLockMilliseconds = getAutoLockMilliseconds();
+			
 			if (autoLockTimer != null) {
 				autoLockTimer.cancel();
 				autoLockTimer = null;
@@ -243,11 +245,30 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 					@Override
 					public void run() {
 						closeCrypt();
-						broadcastState();
 					}
 				}, autoLockMilliseconds);
 			}
 		}
+	}
+	
+	private void broadcastState() {
+		String action = null;
+		
+		switch (state) {
+			case STATE_UNLOCKED:
+				action = ACTION_FPM_UNLOCK;
+				break;
+			case STATE_FAILED:
+				action = ACTION_FPM_FAIL;
+				break;
+			case STATE_LOCKED:
+				action = ACTION_FPM_LOCK;
+				break;
+		}
+		
+		Intent broadcast = new Intent(action);
+		broadcast.putExtra(EXTRA_MSG, failureMsg);
+		sendBroadcast(broadcast);		
 	}
 	
 	private long getAutoLockMilliseconds() {
