@@ -92,7 +92,7 @@ public class FpmListActivity extends ListActivity {
 		dismissDialogs();
 		
 		if (msg != 0 && msg != R.string.exception_fpm_passphrase) {
-			new AlertDialog.Builder(this)
+			AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this)
 				.setTitle(msg)
 				.setIcon(android.R.drawable.ic_dialog_alert)
 				.setCancelable(false)
@@ -102,9 +102,12 @@ public class FpmListActivity extends ListActivity {
 						dialog.dismiss();
 						onFpmLock();
 					}
-				})
-				.create()
-				.show();
+				});
+			int extendedError = getExtendedErrorMessage(msg);
+			if (extendedError != 0) {
+				dialogBuilder.setMessage(extendedError);
+			}
+			dialogBuilder.create().show();
 		} else {
 			onFpmLock();
 		}
@@ -248,6 +251,22 @@ public class FpmListActivity extends ListActivity {
 				.create();
 		}
 		return passphraseDialog;
+	}
+	
+	protected int getExtendedErrorMessage(int shortmsg) {
+		switch (shortmsg) {
+			case R.string.exception_file_not_found:
+			case R.string.exception_io:
+			case R.string.exception_sax:
+				return R.string.exception_file_not_found_extra;
+			case R.string.exception_fpm_unsupported:
+				return R.string.exception_fpm_unsupported_extra;
+			case R.string.exception_jce:
+				return R.string.exception_jce_extra;
+			default:
+				return 0;
+		}
+	
 	}
 	
 	/**
