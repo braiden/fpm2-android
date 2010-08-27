@@ -88,6 +88,13 @@ public class FpmListActivity extends ListActivity {
 		}
 	}
 
+	/**
+	 * Call back when openning FPM store generates an error.
+	 * If the error is anything other than bad password, 
+	 * show an error dialog.
+	 * 
+	 * @param msg
+	 */
 	protected void onFpmError(int msg) {
 		dismissDialogs();
 		
@@ -160,7 +167,7 @@ public class FpmListActivity extends ListActivity {
 		}
 	}
 	
-	private void notifyDataSetChanged() {
+	protected void notifyDataSetChanged() {
 		// notify the adapter of datachange (if supported)
 		Adapter adapter = getListAdapter();
 		if (adapter instanceof BaseAdapter) {
