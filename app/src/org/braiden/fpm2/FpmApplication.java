@@ -155,7 +155,6 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 				
 				try {
 					fpmCrypt.open(new FileInputStream(FPM_FILE), params[0]);
-					scheduleAutoLock();
 				} catch (FileNotFoundException e) {
 					result = R.string.exception_file_not_found;
 					Log.w(TAG, "Failed to open FPM database.", e);
