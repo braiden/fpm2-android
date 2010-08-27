@@ -54,7 +54,8 @@ public class PasswordItemListActivity extends FpmListActivity {
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
-    	super.onCreate(savedInstanceState);    	
+    	super.onCreate(savedInstanceState);
+    	//setContentView(R.layout.password_item_list);
     	// register the adapter for building view for each element of our list
     	BaseAdapter adapter = new FpmCryptListAdapter(this);
     	setListAdapter(adapter);
