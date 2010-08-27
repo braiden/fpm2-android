@@ -28,7 +28,6 @@ package org.braiden.fpm2;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.IntentService;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -181,9 +180,7 @@ public class FpmListActivity extends ListActivity {
 	 */
 	protected void onFpmPassphraseOk(String passphrase) {
 		createProgressDialog().show();
-		Intent serviceIntent = new Intent(this, FpmUnlockService.class);
-		serviceIntent.putExtra(FpmUnlockService.EXTRA_PASSPHRASE, passphrase);
-		startService(serviceIntent);
+		getFpmApplication().openCrypt(passphrase);
 	}
 		
 	/**
@@ -274,32 +271,6 @@ public class FpmListActivity extends ListActivity {
 				return 0;
 		}
 	
-	}
-	
-	/**
-	 * A service which unlocked the FPM data store.
-	 * This can take a while on slower devices.
-	 * Key generations takes as much as 5 seconds on
-	 * my droid 1.
-	 * 
-	 * @author braiden
-	 *
-	 */
-	public static class FpmUnlockService extends IntentService {
-		
-		public static final String EXTRA_PASSPHRASE = "passphrase";
-		
-		public FpmUnlockService() {
-			super("FpmUnlockService");
-		}
-		
-		@Override
-		protected void onHandleIntent(Intent intent) {
-			FpmApplication app = (FpmApplication) getApplication();
-			String passphrase = intent.getStringExtra(EXTRA_PASSPHRASE);
-			app.openCrypt(passphrase);
-		}		
-		
 	}
 	
 	/**

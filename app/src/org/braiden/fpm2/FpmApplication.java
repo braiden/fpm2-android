@@ -44,6 +44,8 @@ import android.app.Application;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.os.AsyncTask;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -82,6 +84,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	
 	protected static final String TAG = "FpmApplication";
 	
+	private Handler handler;
 	private FpmCrypt fpmCrypt = new FpmCrypt();
 	private Timer autoLockTimer = null;
 	private SharedPreferences prefs;
@@ -91,6 +94,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	@Override
 	public void onCreate() {
 		super.onCreate();
+		handler = new Handler();
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
@@ -112,70 +116,90 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	}
 	
 	/**
-	 * 
 	 * Get the state of the FPM database
-	 * @return STATE_LOCKED, STATE_UNLOCKED, STATE_ERROR, STATE_BUSY
 	 * 
+	 * @return STATE_LOCKED, STATE_UNLOCKED, STATE_ERROR, STATE_BUSY
 	 */
-	synchronized
 	public int getCryptState() {
 		return state;
 	}
 	
-	synchronized
+	/**
+	 * True if state == STATE_UNLOCKED, false for all other states.
+	 * 
+	 * @return
+	 */
 	public boolean isCryptOpen() {
 		return state == STATE_UNLOCKED;
 	}
 	
 	/**
-	 * Try to unlock the store. This can take a while
-	 * and must be called in seperate thread / store
+	 * Try to unlock the store. This call is asynchronous and will result
+	 * in a broadcast even being dispatched when the FPM state is updated.
+	 * Multiple calls should have not effect.
 	 * @param passphrase
 	 */
 	public void openCrypt(String passphrase) {
-		int failureMsg = 0;
-		try {
-			synchronized (this) {
-				state = STATE_BUSY;
+		
+		if (state != STATE_LOCKED && state != STATE_FAILED) {
+			// the store is either already open, or busy
+			// nothing to do here.
+			return;
+		}
+		
+		AsyncTask<String, Void, Integer> task = new AsyncTask<String, Void, Integer>() {
+
+			@Override
+			protected Integer doInBackground(String... params) {
+				int result = 0;
+				
+				try {
+					fpmCrypt.open(new FileInputStream(FPM_FILE), params[0]);
+					scheduleAutoLock();
+				} catch (FileNotFoundException e) {
+					result = R.string.exception_file_not_found;
+					Log.w(TAG, "Failed to open FPM database.", e);
+				} catch (IOException e) {
+					result = R.string.exception_io;
+					Log.w(TAG, "Failed to open FPM database.", e);
+				} catch (SAXException e) {
+					result = R.string.exception_sax;
+					Log.w(TAG, "Failed to open FPM database.", e);
+				} catch (GeneralSecurityException e) {
+					result = R.string.exception_jce;
+					Log.w(TAG, "Failed to open FPM database.", e);
+				} catch (FpmCipherUnsupportedException e) {
+					result = R.string.exception_fpm_unsupported;
+					Log.w(TAG, "Failed to open FPM database.", e);
+				} catch (FpmPassphraseInvalidException e) {
+					result = R.string.exception_fpm_passphrase;
+					Log.w(TAG, "Failed to open FPM database.", e);
+				}
+				
+				return result;
 			}
-			fpmCrypt.open(new FileInputStream(FPM_FILE), passphrase);
-			scheduleAutoLock();
-		} catch (FileNotFoundException e) {
-			failureMsg = R.string.exception_file_not_found;
-			Log.w(TAG, "Failed to open FPM database.", e);
-		} catch (IOException e) {
-			failureMsg = R.string.exception_io;
-			Log.w(TAG, "Failed to open FPM database.", e);
-		} catch (SAXException e) {
-			failureMsg = R.string.exception_sax;
-			Log.w(TAG, "Failed to open FPM database.", e);
-		} catch (GeneralSecurityException e) {
-			failureMsg = R.string.exception_jce;
-			Log.w(TAG, "Failed to open FPM database.", e);
-		} catch (FpmCipherUnsupportedException e) {
-			failureMsg = R.string.exception_fpm_unsupported;
-			Log.w(TAG, "Failed to open FPM database.", e);
-		} catch (FpmPassphraseInvalidException e) {
-			failureMsg = R.string.exception_fpm_passphrase;
-			Log.w(TAG, "Failed to open FPM database.", e);
-		}
+
+			@Override
+			protected void onPostExecute(Integer result) {
+				FpmApplication.this.failureMsg = result;
+				FpmApplication.this.state = result == 0 ? STATE_UNLOCKED : STATE_FAILED;
+				broadcastState();
+			}
+			
+		};
 		
-		synchronized (this) {
-			this.failureMsg = failureMsg;
-			state = failureMsg == 0 ? STATE_UNLOCKED : STATE_FAILED;
-			broadcastState();
-		}
-		
+		state = STATE_BUSY;
+		task.execute(passphrase);
 	}
 	
 	/**
 	 * Close the FPM datastore. User will need to enter
 	 * passphrase again, before accessing any data. 
 	 */
-	synchronized
 	public void closeCrypt() {
 		fpmCrypt.close();
 		state = STATE_LOCKED;
+		failureMsg = 0;
 		broadcastState();
 	}
 
@@ -185,7 +209,6 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	 * @param s
 	 * @return
 	 */
-	synchronized
 	public String decrypt(String s) {
 		if (isCryptOpen()) {
 			try {
@@ -204,7 +227,6 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	 * 
 	 * @return
 	 */
-	synchronized
 	public List<PasswordItem> getPasswordItems() {
 		if (isCryptOpen()) {
 			return fpmCrypt.getFpmFile().getPasswordItems();
@@ -219,7 +241,6 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	 * @param id
 	 * @return
 	 */
-	synchronized
 	public PasswordItem getPasswordItemById(long id) {
 		List<PasswordItem> items = getPasswordItems();
 		if (id >= items.size()) {
@@ -229,7 +250,6 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 		}
 	}
 	
-	synchronized
 	private void scheduleAutoLock() {
 		if (isCryptOpen()) {
 			long autoLockMilliseconds = getAutoLockMilliseconds();
@@ -244,7 +264,12 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 				autoLockTimer.schedule(new TimerTask() {
 					@Override
 					public void run() {
-						closeCrypt();
+						handler.post(new Runnable() {
+							@Override
+							public void run() {
+								closeCrypt();								
+							}
+						});
 					}
 				}, autoLockMilliseconds);
 			}
