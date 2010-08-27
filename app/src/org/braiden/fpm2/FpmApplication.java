@@ -184,6 +184,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 				FpmApplication.this.failureMsg = result;
 				FpmApplication.this.state = result == 0 ? STATE_UNLOCKED : STATE_FAILED;
 				broadcastState();
+				scheduleAutoLock();
 			}
 			
 		};
