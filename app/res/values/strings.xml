@@ -43,4 +43,6 @@
     <string name="all_category">&lt;&lt; ALL &gt;&gt;</string>
     <string name="default_category">&lt;&lt; DEFAULT &gt;&gt;</string>
     
+    <string name="search_hint">Search FPM2</string>
+    
 </resources>

@@ -34,6 +34,7 @@ import org.apache.commons.lang.StringUtils;
 import org.braiden.fpm2.model.PasswordItem;
 
 import android.app.Activity;
+import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -119,6 +120,15 @@ public class PasswordItemListActivity extends FpmListActivity {
     	
     }
     
+	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		if (intent.getAction().equals(Intent.ACTION_SEARCH) && getFpmApplication().isCryptOpen()) {
+			String searchString = intent.getStringExtra(SearchManager.QUERY);
+			getListView().setFilterText(searchString);
+		}
+	}
+
 	@Override
 	@SuppressWarnings("unchecked")
 	protected void onFpmUnlock() {
