@@ -121,6 +121,15 @@ public class PasswordItemListActivity extends FpmListActivity {
     }
     
 	@Override
+	public boolean onSearchRequested() {
+		if (getFpmApplication().isCryptOpen()) {
+			return super.onSearchRequested();
+		} else {
+			return false;
+		}
+	}
+
+	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
 		if (intent.getAction().equals(Intent.ACTION_SEARCH) && getFpmApplication().isCryptOpen()) {
