@@ -40,5 +40,7 @@
     <string name="exception_fpm_unsupported_extra">Your FPM file uses a cipher not currently supported. Only AES-256 is supported.</string>
     
     <string name="category">Category:</string>
+    <string name="all_category">&lt;&lt; ALL &gt;&gt;</string>
+    <string name="default_category">&lt;&lt; DEFAULT &gt;&gt;</string>
     
 </resources>

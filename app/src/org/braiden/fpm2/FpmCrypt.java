@@ -33,6 +33,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.Map.Entry;
 
 import javax.crypto.NoSuchPaddingException;
@@ -71,6 +73,7 @@ public class FpmCrypt {
 	private FpmKeyGenerator keyGenerator;
 	private FpmFile fpmFile;
 	private byte[] key;
+	private Set<String> categories;
 	
 	/**
 	 * Open the given FPM file, pointed to by inputStream
@@ -116,6 +119,8 @@ public class FpmCrypt {
 				throw new FpmPassphraseInvalidException("Passphrase invalid.");
 			}
 			
+			initCategories();
+			
 			isSuccess = true;
 		} finally {
 			if (!isSuccess) {
@@ -138,6 +143,10 @@ public class FpmCrypt {
 		fpmFile = null;
 	}
 	
+	public Set<String> getCategories() {
+		return categories;
+	}
+
 	/**
 	 * Decrypt the provided string using FPM2's logic
 	 * 
@@ -284,6 +293,15 @@ public class FpmCrypt {
 			return new PBKDF2FpmKeyGenerator();
 		}
 		return null;
+	}
+	
+	protected void initCategories() {
+		categories = new TreeSet<String>();
+		for (PasswordItem item : fpmFile.getPasswordItems()) {
+			if (!StringUtils.isBlank(item.getCategory())) {
+				categories.add(item.getCategory());
+			}
+		}
 	}
 	
 	public static class FpmCipherUnsupportedException extends Exception {

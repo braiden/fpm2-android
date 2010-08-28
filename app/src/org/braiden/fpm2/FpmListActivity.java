@@ -140,7 +140,7 @@ public class FpmListActivity extends ListActivity {
 	 */
 	protected void onFpmLock() {
 		// fpm db lock event is recevied
-		notifyDataSetInvalidated();
+		notifyDataSetChanged();
 
 		synchronized (getFpmApplication()) {
 			if (getFpmApplication().getCryptState() != FpmApplication.STATE_BUSY) {
@@ -171,13 +171,6 @@ public class FpmListActivity extends ListActivity {
 		Adapter adapter = getListAdapter();
 		if (adapter instanceof BaseAdapter) {
 			((BaseAdapter) adapter).notifyDataSetChanged();
-		}
-	}
-	protected void notifyDataSetInvalidated() {
-		// notify the adapter of datachange (if supported)
-		Adapter adapter = getListAdapter();
-		if (adapter instanceof BaseAdapter) {
-			((BaseAdapter) adapter).notifyDataSetInvalidated();
 		}
 	}
 

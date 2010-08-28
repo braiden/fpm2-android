@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -89,7 +90,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	private Timer autoLockTimer = null;
 	private SharedPreferences prefs;
 	private int failureMsg = 0;
-	private int state = STATE_LOCKED;
+	volatile private int state = STATE_LOCKED;
 	
 	@Override
 	public void onCreate() {
@@ -219,6 +220,14 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 			}
 		} else {
 			return null;
+		}
+	}
+	
+	public Set<String> getCategories() {
+		if (isCryptOpen()) {
+			return fpmCrypt.getCategories();
+		} else {
+			return Collections.emptySet();
 		}
 	}
 	

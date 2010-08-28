@@ -9,7 +9,6 @@ public class FpmCryptTest extends InstrumentationTestCase {
 	public void testOpen() throws Exception {
 		FpmCrypt fpmCrypt = new FpmCrypt();
 		fpmCrypt.open(getInstrumentation().getContext().getAssets().open("fpm.xml"), "secret");
-		assertTrue(fpmCrypt.isOpen());
 		assertEquals(3, fpmCrypt.getFpmFile().getLauncherItems().size());
 		assertEquals(3, fpmCrypt.getFpmFile().getPasswordItems().size());
 		

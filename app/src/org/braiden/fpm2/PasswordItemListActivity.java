@@ -26,6 +26,11 @@ package org.braiden.fpm2;
  *
  */
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 import org.braiden.fpm2.model.PasswordItem;
 
 import android.app.Activity;
@@ -36,10 +41,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 /**
@@ -54,17 +62,36 @@ public class PasswordItemListActivity extends FpmListActivity {
 	
 	protected final static String TAG = "PasswordListActivity";
 	
+	private Spinner categoryPicker;
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
-    	super.onCreate(savedInstanceState);
-    	
+    	super.onCreate(savedInstanceState);    	
     	setContentView(R.layout.password_item_list);
     	
+    	// populate the category picker with some default values
+    	categoryPicker = (Spinner) findViewById(R.id.category_picker);
+    	final ArrayAdapter<String> categoryData = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, 
+    			new String[] { getString(R.string.all_category), getString(R.string.default_category) } );
+    	categoryData.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    	categoryPicker.setAdapter(categoryData);
     	
+    	categoryPicker.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parentView, View selectedItem, int position, long id) {				
+
+			}
+			
+			@Override
+			public void onNothingSelected(AdapterView<?> parentView) {
+				
+			}
+		});
     	
     	// register the adapter for building view for each element of our list
     	BaseAdapter adapter = new FpmCryptListAdapter(this);
     	setListAdapter(adapter);
+    	getListView().setTextFilterEnabled(true);
     }
     
 	@Override
@@ -103,32 +130,48 @@ public class PasswordItemListActivity extends FpmListActivity {
 	 */
 	public static class FpmCryptListAdapter extends BaseAdapter implements Filterable {
     	
-    	LayoutInflater layoutInflater;
-    	FpmApplication app;
+    	private LayoutInflater layoutInflater;
+    	private FpmApplication app;
+    	private List<PasswordItem> data;
+    	private Filter filter = null;
     	
     	public FpmCryptListAdapter(Activity activity) {
     		layoutInflater = LayoutInflater.from(activity);
     		app = (FpmApplication) activity.getApplication();
+    		if (app.isCryptOpen()) {
+    			data = app.getPasswordItems();
+    		}
     	}
     	
 		@Override
+		public void notifyDataSetChanged() {
+			// if no data has ever been associated with the
+			// view, get all data from the crypt.
+			// (if data already associated, don't change it.)
+			if (data == null && app.isCryptOpen()) {
+				data = app.getPasswordItems();
+			}
+			super.notifyDataSetChanged();
+		}
+
+		@Override
 		public Filter getFilter() {
-			return null;
+			return filter != null ? filter : new FpmPasswordItemFilter(app, this);
 		}
 
 		@Override
 		public int getCount() {
-			return app.getPasswordItems().size();
+			return app.isCryptOpen() && data != null ? data.size() : 0;
 		}
 
 		@Override
 		public Object getItem(int position) {
-			return app.getPasswordItemById(position);
+			return data.get(position);
 		}
 
 		@Override
 		public long getItemId(int position) {
-			return position;
+			return position; // FIXME
 		}
 
 		@Override
@@ -146,21 +189,90 @@ public class PasswordItemListActivity extends FpmListActivity {
 				viewHolder = (ViewHolder) convertView.getTag();
 			}
 			
-			// item can be null if db is locked at same time
-			// as users is scrolling.
-			if (item != null) {
-				viewHolder.title.setText(item.getTitle());
-				viewHolder.url.setText(item.getUrl());
-			}
+			viewHolder.title.setText(item.getTitle());
+			viewHolder.url.setText(item.getUrl());
 
 			return convertView;
+		}
+
+		public void setData(List<PasswordItem> data) {			
+			if (app.isCryptOpen()) {
+				this.data = data;
+			} else {
+				this.data = Collections.emptyList();
+			}
+			
+			notifyDataSetChanged();
 		}
 
 		private static class ViewHolder {
 			public TextView title;
 			public TextView url;
 		}	
+		
+	}
 	
+	public static class FpmPasswordItemFilter extends Filter {
+		
+		private FpmApplication fpmApp;
+		private FpmCryptListAdapter fpmListAdapter;
+		
+		public FpmPasswordItemFilter(FpmApplication fpmApp, FpmCryptListAdapter fpmListAdapter) {
+			this.fpmApp = fpmApp;
+			this.fpmListAdapter = fpmListAdapter;
+		}
+		
+		@Override
+		protected FilterResults performFiltering(CharSequence constraintSeq) {
+			String constraint = constraintSeq == null ? StringUtils.EMPTY : constraintSeq.toString().trim().toUpperCase();
+			List<PasswordItem> allItems = getPasswordItems();
+			FilterResults result = new FilterResults();
+			
+			if (constraint == null || StringUtils.isBlank(constraint)) {
+				result.values = allItems;
+			} else {
+				List<PasswordItem> filteredItems = new ArrayList<PasswordItem>(allItems.size());
+				for (PasswordItem item : allItems) {
+					if (item.getTitle().toUpperCase().contains(constraint)) {
+						filteredItems.add(item);
+					}
+				}
+				result.values = filteredItems;
+			}
+			
+			return result;
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		protected void publishResults(CharSequence constraint,
+				FilterResults results) {
+			fpmListAdapter.setData((List<PasswordItem>) results.values);
+		}
+		
+		/**
+		 * Get a list of passwords from the Applications FpmCrypt.
+		 * The method may performs unsafe / unsynchronized access
+		 * to FpmApplication. publishResults() must re-assert 
+		 * the state of FpmCrypt before showing the passwords.
+		 * 
+		 * @return
+		 */
+		private List<PasswordItem> getPasswordItems() {
+			List<PasswordItem> result = Collections.emptyList();
+			try {
+				result = fpmApp.getPasswordItems();
+			} catch (NullPointerException e) {
+				 // If closeCrypt() and getPasswordItems() are running at
+				 // the same time null pointer is possible, i try to catch
+				 // it here. I don't know why I don't just syhcronize.
+				if (fpmApp.isCryptOpen()) {
+					throw e;
+				}
+			}
+			return result;
+		}
+		
 	}
 	    
 }
