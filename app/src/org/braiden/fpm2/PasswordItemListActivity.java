@@ -171,7 +171,7 @@ public class PasswordItemListActivity extends FpmListActivity {
 
 		@Override
 		public long getItemId(int position) {
-			return position; // FIXME
+			return ((PasswordItem) getItem(position)).getId();
 		}
 
 		@Override

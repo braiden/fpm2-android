@@ -28,6 +28,7 @@ package org.braiden.fpm2.model;
 
 public class PasswordItem implements DataObject {
 
+	private int id;
 	private String user;
 	private String url;
 	private String password;
@@ -99,6 +100,14 @@ public class PasswordItem implements DataObject {
 
 	public void setTitle(String title) {
 		this.title = title;
+	}
+	
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 
 	@Override

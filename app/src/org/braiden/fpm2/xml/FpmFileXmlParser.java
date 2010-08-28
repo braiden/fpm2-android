@@ -100,6 +100,7 @@ public class FpmFileXmlParser {
 				fpmFile.getLauncherItems().add((LauncherItem) thisNode);
 			} else if (localName.equals(TAG_PASSWORD_ITEM)) {
 				thisNode = new PasswordItem();
+				((PasswordItem) thisNode).setId(fpmFile.getPasswordItems().size());
 				fpmFile.getPasswordItems().add((PasswordItem) thisNode);
 			}
 
