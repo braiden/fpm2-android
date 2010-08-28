@@ -10,4 +10,8 @@
         android:title="@string/lock"
         android:icon="@android:drawable/ic_menu_close_clear_cancel" />
   
+  <item android:id="@+id/main_menu_about"
+  		android:title="@string/about"
+  		android:icon="@android:drawable/ic_menu_info_details" />
+  
 </menu>

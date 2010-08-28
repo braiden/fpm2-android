@@ -221,6 +221,9 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 			case R.id.main_menu_lock:
 				getFpmApplication().closeCrypt();
 				return true;
+			case R.id.main_menu_about:
+				startActivity(new Intent(this, AboutActivity.class));
+				return true;
 			default:
 				return super.onOptionsItemSelected(item);
 		}

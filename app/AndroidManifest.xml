@@ -28,6 +28,8 @@
 		
 		<activity android:name=".FpmPreferencesActivity" />
 				
+		<activity android:name=".AboutActivity" />
+				
     </application>
     
     <uses-sdk android:minSdkVersion="4" />
