@@ -37,12 +37,16 @@ import android.app.Activity;
 import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
@@ -51,6 +55,7 @@ import android.widget.Filterable;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 
 /**
  * Main entry point for application, lists all items in db.
@@ -121,8 +126,21 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 				}
 			}
 		});
-    	
+    	    	
     	receiver = new FpmBroadcastReceiver(this);
+    	
+    	getListView().setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+			@Override
+			public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+				AdapterView.AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+				PasswordItem item = getFpmApplication().getPasswordItemById(info.id);
+				getMenuInflater().inflate(R.menu.context_menu, menu);
+				if (item != null) {
+					menu.setHeaderTitle(item.getTitle());
+				}
+			}
+		});
+    	
     	
 		UnlockCryptActivity.unlockIfRequired(this);
     }
@@ -231,12 +249,43 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 
 	@Override
 	protected void onListItemClick(ListView listView, View view, int position, long id) {
-		// open the View details activity when an item is selected.
+		viewItem(id);
+	}
+	
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		AdapterView.AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+		switch (item.getItemId()) {
+			case R.id.context_menu_view:
+				viewItem(info.id);
+				return true;
+			case R.id.context_menu_launch:
+				launchItem(info.id);
+				return true;
+			default:
+				return super.onContextItemSelected(item);
+		}
+	}
+
+	protected void launchItem(long id) {		
+		PasswordItem item = getFpmApplication().getPasswordItemById(id);
+		if (item != null) {
+			try {
+				Uri uri = Uri.parse(item.getUrl());
+				Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+				startActivity(intent);
+			} catch (Exception e) {
+				Log.i(TAG, "Cannot launch item (id=" + id + ").", e);
+			}
+		}
+	}
+
+	protected void viewItem(long id) {
     	Intent intent = new Intent(this, ViewPasswordItemActivity.class);
     	intent.putExtra(EXTRA_ID, id);
     	startActivityForResult(intent, 0);
 	}
-	
+
 	protected FpmApplication getFpmApplication() {
 		return (FpmApplication) getApplication();
 	}
