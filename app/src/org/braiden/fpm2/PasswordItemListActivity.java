@@ -36,6 +36,7 @@ import org.braiden.fpm2.model.PasswordItem;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -61,39 +62,76 @@ public class PasswordItemListActivity extends FpmListActivity {
 	public final static String EXTRA_ID = "id";
 	
 	protected final static String TAG = "PasswordListActivity";
+	protected final static String CATEGORY_DEFAULT = "org.braiden.fpm2.__DEFAULT__";
 	
 	private Spinner categoryPicker;
+	private boolean isCategoryPickerInitialized;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
     	super.onCreate(savedInstanceState);    	
     	setContentView(R.layout.password_item_list);
     	
+    	// register the adapter for building view for each element of our list
+    	BaseAdapter adapter = new FpmCryptListAdapter(this, getListView());
+    	setListAdapter(adapter);
+    	getListView().setTextFilterEnabled(true);
+    	
+    	List<String> allCategories = new ArrayList<String>(20);
+    	allCategories.add(getString(R.string.all_category));
+    	allCategories.add(getString(R.string.default_category));
+    	if (getFpmApplication().isCryptOpen()) {
+    		isCategoryPickerInitialized = true;
+    		allCategories.addAll(getFpmApplication().getCategories());
+    	}
+    	
     	// populate the category picker with some default values
     	categoryPicker = (Spinner) findViewById(R.id.category_picker);
-    	final ArrayAdapter<String> categoryData = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, 
-    			new String[] { getString(R.string.all_category), getString(R.string.default_category) } );
+    	final ArrayAdapter<String> categoryData = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, allCategories );
     	categoryData.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     	categoryPicker.setAdapter(categoryData);
-    	
     	categoryPicker.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override
 			public void onItemSelected(AdapterView<?> parentView, View selectedItem, int position, long id) {				
-
+				CharSequence textFilter = getListView().getTextFilter();
+				FpmPasswordItemFilter filter = (FpmPasswordItemFilter) ((Filterable) getListAdapter()).getFilter();
+				String category = null;
+				if (position == 1) {
+					category = CATEGORY_DEFAULT;
+				} else if (position != 0) {
+					category = (String) categoryPicker.getItemAtPosition(position);
+				}
+				filter.setCategory(category);
+				if (getFpmApplication().isCryptOpen()) {
+					filter.filter(textFilter);
+				}
 			}
 			
 			@Override
 			public void onNothingSelected(AdapterView<?> parentView) {
-				
+				CharSequence textFilter = getListView().getTextFilter();
+				FpmPasswordItemFilter filter = (FpmPasswordItemFilter) ((Filterable) getListAdapter()).getFilter();
+				filter.setCategory(null);
+				if (getFpmApplication().isCryptOpen()) {
+					filter.filter(textFilter);
+				}
 			}
 		});
     	
-    	// register the adapter for building view for each element of our list
-    	BaseAdapter adapter = new FpmCryptListAdapter(this);
-    	setListAdapter(adapter);
-    	getListView().setTextFilterEnabled(true);
     }
     
+	@Override
+	@SuppressWarnings("unchecked")
+	protected void onFpmUnlock() {
+		super.onFpmUnlock();
+		if (!isCategoryPickerInitialized) {
+			isCategoryPickerInitialized = true;
+			for (String cat : getFpmApplication().getCategories()) {
+				((ArrayAdapter<String>) categoryPicker.getAdapter()).add(cat);
+			}
+		}
+	}
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		getMenuInflater().inflate(R.menu.main_menu, menu);
@@ -134,9 +172,11 @@ public class PasswordItemListActivity extends FpmListActivity {
     	private FpmApplication app;
     	private List<PasswordItem> data;
     	private Filter filter = null;
+    	private ListView listView;
     	
-    	public FpmCryptListAdapter(Activity activity) {
+    	public FpmCryptListAdapter(Activity activity, ListView listView) {
     		layoutInflater = LayoutInflater.from(activity);
+    		this.listView = listView;
     		app = (FpmApplication) activity.getApplication();
     		if (app.isCryptOpen()) {
     			data = app.getPasswordItems();
@@ -149,9 +189,10 @@ public class PasswordItemListActivity extends FpmListActivity {
 			// view, get all data from the crypt.
 			// (if data already associated, don't change it.)
 			if (data == null && app.isCryptOpen()) {
-				data = app.getPasswordItems();
+				getFilter().filter(listView.getTextFilter());
+			} else {
+				super.notifyDataSetChanged();
 			}
-			super.notifyDataSetChanged();
 		}
 
 		@Override
@@ -214,8 +255,11 @@ public class PasswordItemListActivity extends FpmListActivity {
 	
 	public static class FpmPasswordItemFilter extends Filter {
 		
+		protected static final String FPM_PASSWORD_FILTER = "FpmPasswordFilter";
+		
 		private FpmApplication fpmApp;
 		private FpmCryptListAdapter fpmListAdapter;
+		private String category = null;
 		
 		public FpmPasswordItemFilter(FpmApplication fpmApp, FpmCryptListAdapter fpmListAdapter) {
 			this.fpmApp = fpmApp;
@@ -228,12 +272,15 @@ public class PasswordItemListActivity extends FpmListActivity {
 			List<PasswordItem> allItems = getPasswordItems();
 			FilterResults result = new FilterResults();
 			
-			if (constraint == null || StringUtils.isBlank(constraint)) {
+			Log.d(FPM_PASSWORD_FILTER, "performFiltering(string=" + constraintSeq + ", category=" + category + ")");
+			
+			if ((constraint == null || StringUtils.isBlank(constraint)) && category == null) {
 				result.values = allItems;
 			} else {
 				List<PasswordItem> filteredItems = new ArrayList<PasswordItem>(allItems.size());
 				for (PasswordItem item : allItems) {
-					if (item.getTitle().toUpperCase().contains(constraint)) {
+					if (item.getTitle().toUpperCase().contains(constraint)
+							&& acceptCategory(item)) {
 						filteredItems.add(item);
 					}
 				}
@@ -271,6 +318,20 @@ public class PasswordItemListActivity extends FpmListActivity {
 				}
 			}
 			return result;
+		}
+
+		private boolean acceptCategory(PasswordItem item) {
+			return category == null 
+					|| (CATEGORY_DEFAULT.equals(category) && item.isDefault())
+					|| (category.equals(item.getCategory()));
+		}
+		
+		public String getCategory() {
+			return category;
+		}
+
+		public void setCategory(String category) {
+			this.category = category;
 		}
 		
 	}

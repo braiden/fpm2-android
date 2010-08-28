@@ -141,6 +141,7 @@ public class FpmCrypt {
 		cipher = null;
 		keyGenerator = null;
 		fpmFile = null;
+		categories = null;
 	}
 	
 	public Set<String> getCategories() {
