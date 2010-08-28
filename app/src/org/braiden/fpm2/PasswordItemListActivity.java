@@ -36,7 +36,6 @@ import org.braiden.fpm2.model.PasswordItem;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -92,7 +91,7 @@ public class PasswordItemListActivity extends FpmListActivity {
     	categoryPicker.setAdapter(categoryData);
     	categoryPicker.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override
-			public void onItemSelected(AdapterView<?> parentView, View selectedItem, int position, long id) {				
+			public void onItemSelected(AdapterView<?> parentView, View selectedItem, int position, long id) {
 				CharSequence textFilter = getListView().getTextFilter();
 				FpmPasswordItemFilter filter = (FpmPasswordItemFilter) ((Filterable) getListAdapter()).getFilter();
 				String category = null;
@@ -197,7 +196,7 @@ public class PasswordItemListActivity extends FpmListActivity {
 
 		@Override
 		public Filter getFilter() {
-			return filter != null ? filter : new FpmPasswordItemFilter(app, this);
+			return filter != null ? filter : (filter = new FpmPasswordItemFilter(app, this));
 		}
 
 		@Override
@@ -254,12 +253,10 @@ public class PasswordItemListActivity extends FpmListActivity {
 	}
 	
 	public static class FpmPasswordItemFilter extends Filter {
-		
-		protected static final String FPM_PASSWORD_FILTER = "FpmPasswordFilter";
-		
+				
 		private FpmApplication fpmApp;
 		private FpmCryptListAdapter fpmListAdapter;
-		private String category = null;
+		volatile private String category = null;
 		
 		public FpmPasswordItemFilter(FpmApplication fpmApp, FpmCryptListAdapter fpmListAdapter) {
 			this.fpmApp = fpmApp;
@@ -272,7 +269,7 @@ public class PasswordItemListActivity extends FpmListActivity {
 			List<PasswordItem> allItems = getPasswordItems();
 			FilterResults result = new FilterResults();
 			
-			Log.d(FPM_PASSWORD_FILTER, "performFiltering(string=" + constraintSeq + ", category=" + category + ")");
+			// android.util.Log.d(TAG, "performFiltering(string=" + constraintSeq + ", category=" + category + ")");
 			
 			if ((constraint == null || StringUtils.isBlank(constraint)) && category == null) {
 				result.values = allItems;
