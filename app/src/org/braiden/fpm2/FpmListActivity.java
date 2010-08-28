@@ -142,14 +142,11 @@ public class FpmListActivity extends ListActivity {
 		// fpm db lock event is recevied
 		notifyDataSetChanged();
 
-		synchronized (getFpmApplication()) {
-			if (getFpmApplication().getCryptState() != FpmApplication.STATE_BUSY) {
-				createPassphraseDialog().show();
-			} else {
-				createProgressDialog().show();
-			}
-		}
-		
+		if (getFpmApplication().getCryptState() != FpmApplication.STATE_BUSY) {
+			createPassphraseDialog().show();
+		} else {
+			createProgressDialog().show();
+		}		
 	}
 	
 	private void dismissDialogs() {
@@ -162,6 +159,8 @@ public class FpmListActivity extends ListActivity {
 		
 		if (progressDialog != null) {
 			progressDialog.dismiss();
+			// progress dialog can't be
+			// reused, the busy spinner stops spinning.
 			progressDialog = null;
 		}
 	}
@@ -196,7 +195,7 @@ public class FpmListActivity extends ListActivity {
 		super.onActivityResult(requestCode, resultCode, data);
 		// if a child activity's passphrase dialog was canceled
 		// it cascaded to close entire stack. don't want to prompt
-		// again at each parent.
+		// again at each activity in the stack
 		if (resultCode == FPM_PASSPHRASE_CANCEL) {
 			setResult(FPM_PASSPHRASE_CANCEL);
 			finish();

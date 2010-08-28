@@ -90,6 +90,12 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	private Timer autoLockTimer = null;
 	private SharedPreferences prefs;
 	private int failureMsg = 0;
+	// The ListView filter accesses fpm application from
+	// another thread where list processing occurs. none
+	// of the methods of this class are syncrhonized, we
+	// make this static so state is pseudo accurate.
+	// but FpmApplication is not thread safe and access
+	// from the filter is an ugly hack.
 	volatile private int state = STATE_LOCKED;
 	
 	@Override
@@ -136,8 +142,8 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	
 	/**
 	 * Try to unlock the store. This call is asynchronous and will result
-	 * in a broadcast even being dispatched when the FPM state is updated.
-	 * Multiple calls should have not effect.
+	 * in a broadcast event being dispatched when the FPM state is updated.
+	 * Multiple calls should have no effect.
 	 * @param passphrase
 	 */
 	public void openCrypt(String passphrase) {
@@ -273,6 +279,10 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 				autoLockTimer.schedule(new TimerTask() {
 					@Override
 					public void run() {
+						// handler will post the runnable into 
+						// the UI event queue, the lets us ensure
+						// that access to FpmApplication remains
+						// single threaded. (and state is accurate)
 						handler.post(new Runnable() {
 							@Override
 							public void run() {
