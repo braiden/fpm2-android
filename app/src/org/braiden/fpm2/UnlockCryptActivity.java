@@ -46,8 +46,10 @@ import android.widget.EditText;
  *
  */
 public class UnlockCryptActivity extends Activity implements FpmBroadcastReceiver.Listener {
-		
+	
 	public static final int UNLOCK_CRYPT_REQUEST_CODE = 10;
+	
+	private static boolean isUnlockActivityRunning = false;
 	
 	private LayoutInflater layoutInflater;
 	private FpmBroadcastReceiver broadcastReceiver;
@@ -59,10 +61,11 @@ public class UnlockCryptActivity extends Activity implements FpmBroadcastReceive
 	}
 	
 	public static void unlockIfRequired(Activity caller) {
-		if (!((FpmApplication) caller.getApplication()).isCryptOpen()) {
+		if (!((FpmApplication) caller.getApplication()).isCryptOpen()
+				&& !isUnlockActivityRunning) {
+			isUnlockActivityRunning = true;
 			Intent intent = new Intent(caller, UnlockCryptActivity.class);
 			caller.startActivityForResult(intent, UNLOCK_CRYPT_REQUEST_CODE);
-			//caller.startActivity(intent);
 		}
 	}
 	
@@ -77,26 +80,20 @@ public class UnlockCryptActivity extends Activity implements FpmBroadcastReceive
 	protected void onDestroy() {
 		super.onDestroy();
 		broadcastReceiver.unregister();
+		isUnlockActivityRunning = false;
 	}
 	
 	@Override
-	protected void onResume() {
-		super.onResume();
-		onFpmLock();
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus && !getFpmApplication().isCryptOpen()) {
+			// initiate attempt to lock db
+			// window is focused whenever the dialogs are dismissed
+			// so this causes password to continue prompting until
+			// acitivity finishes
+			onFpmLock();
+		}
 	}
-	
-	
-//	@Override
-//	public void onWindowFocusChanged(boolean hasFocus) {
-//		super.onWindowFocusChanged(hasFocus);
-//		if (hasFocus && !getFpmApplication().isCryptOpen()) {
-//			// initiate attempt to lock db
-//			// window is focused whenever the dialogs are dismissed
-//			// so this causes password to continue prompting until
-//			// acitivity finishes
-//			onFpmLock();
-//		}
-//	}
 
 	/**
 	 * Call back when openning FPM store generates an error.
