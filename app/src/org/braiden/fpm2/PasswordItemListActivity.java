@@ -37,6 +37,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -99,7 +101,7 @@ public class PasswordItemListActivity extends FpmListActivity {
 	 * @author braiden
 	 *
 	 */
-	public static class FpmCryptListAdapter extends BaseAdapter {
+	public static class FpmCryptListAdapter extends BaseAdapter implements Filterable {
     	
     	LayoutInflater layoutInflater;
     	FpmApplication app;
@@ -109,6 +111,11 @@ public class PasswordItemListActivity extends FpmListActivity {
     		app = (FpmApplication) activity.getApplication();
     	}
     	
+		@Override
+		public Filter getFilter() {
+			return null;
+		}
+
 		@Override
 		public int getCount() {
 			return app.getPasswordItems().size();
@@ -152,8 +159,8 @@ public class PasswordItemListActivity extends FpmListActivity {
 		private static class ViewHolder {
 			public TextView title;
 			public TextView url;
-		}
-		
-    }
-    
+		}	
+	
+	}
+	    
 }

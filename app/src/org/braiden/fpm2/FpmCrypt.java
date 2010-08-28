@@ -37,6 +37,7 @@ import java.util.Map.Entry;
 
 import javax.crypto.NoSuchPaddingException;
 
+import org.apache.commons.lang.StringUtils;
 import org.braiden.fpm2.crypto.FpmCipher;
 import org.braiden.fpm2.crypto.FpmKeyGenerator;
 import org.braiden.fpm2.crypto.JCEFpmCipher;
@@ -69,7 +70,6 @@ public class FpmCrypt {
 	private FpmCipher cipher;
 	private FpmKeyGenerator keyGenerator;
 	private FpmFile fpmFile;
-	private boolean isOpen;
 	private byte[] key;
 	
 	/**
@@ -87,6 +87,7 @@ public class FpmCrypt {
 	 */
 	public void open(InputStream inputStream, String password) 	throws IOException, SAXException, 
 			GeneralSecurityException, FpmCipherUnsupportedException, FpmPassphraseInvalidException {
+		boolean isSuccess = false;
 		try {
 			// build data objects form xml
 			fpmFile = FpmFileXmlParser.parse(inputStream);
@@ -99,6 +100,11 @@ public class FpmCrypt {
 			if (cipher == null || keyGenerator == null) {
 				throw new FpmCipherUnsupportedException("FPM Cipher \"" + fpmFile.getKeyInfo().getCipher() + "\" is not supported.");
 			}
+			
+			if (StringUtils.isEmpty(password)) {
+				throw new FpmPassphraseInvalidException("Empty passphrase.");
+			}
+			
 			// build a key (byte[]) from the provided password.
 			this.key = keyGenerator.generateKey(password, fpmFile.getKeyInfo().getSalt());
 			
@@ -107,52 +113,29 @@ public class FpmCrypt {
 			
 			// verify data decrypted ok, if not, key must be invalid.
 			if (!verifyVstring()) {
-				throw new FpmPassphraseInvalidException("Password invalid.");
+				throw new FpmPassphraseInvalidException("Passphrase invalid.");
 			}
 			
-			isOpen = true;
-		} catch (IOException e) {
-			close();
-			throw e;
-		} catch (SAXException e) {
-			close();
-			throw e;
-		} catch (GeneralSecurityException e) {
-			close();
-			throw e;
-		} catch (FpmCipherUnsupportedException e) {
-			close();
-			throw e;
-		} catch (FpmPassphraseInvalidException e) {
-			close();
-			throw e;
-		} catch (IllegalArgumentException e) {
-			close();
-			throw new FpmPassphraseInvalidException(e);
+			isSuccess = true;
+		} finally {
+			if (!isSuccess) {
+				close();
+			}
 		}
 	}
-	
-	/**
-	 * True if this FpmCrypt is open and key is valid.
-	 * @return
-	 */
-	public boolean isOpen() {
-		return isOpen;
-	}
-	
+
 	/**
 	 * Close the crypt
 	 */
 	public void close() {
-		if (isOpen()) {
+		if (key != null) {
 			// futile(?) attempt to clean key from memory.
 			Arrays.fill(key, (byte)0);
-			isOpen = false;
-			cipher = null;
-			keyGenerator = null;
-			fpmFile = null;
 			key = null;
 		}
+		cipher = null;
+		keyGenerator = null;
+		fpmFile = null;
 	}
 	
 	/**
