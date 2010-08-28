@@ -26,42 +26,44 @@ package org.braiden.fpm2;
  *
  */
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.ListActivity;
 import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Adapter;
-import android.widget.BaseAdapter;
 import android.widget.EditText;
 
 /**
- * Base class for activities which want to access FpmCrypt.
- * Takes care of ensuring the Fpm database is unlocked when
- * the view is focussed. Will notify list adapter of data
- * changes, display password prompt and dialogs.
+ * View for unlocking the fpm database.
+ * Other acitivities can call unlockIfRequired()
+ * to unlock db before attempting access.
  *  
  * @author braiden
  *
  */
-public class FpmListActivity extends ListActivity {
-	
-	private static final int FPM_PASSPHRASE_CANCEL = 0xFFFFFF00;
+public class UnlockCryptActivity extends Activity implements FpmBroadcastReceiver.Listener {
+		
+	public static final int UNLOCK_CRYPT_REQUEST_CODE = 10;
 	
 	private LayoutInflater layoutInflater;
 	private FpmBroadcastReceiver broadcastReceiver;
 	private AlertDialog passphraseDialog = null;
 	private ProgressDialog progressDialog = null;
 	
-	public FpmApplication getFpmApplication() {
+	protected FpmApplication getFpmApplication() {
 		return (FpmApplication) getApplication();
+	}
+	
+	public static void unlockIfRequired(Activity caller) {
+		if (!((FpmApplication) caller.getApplication()).isCryptOpen()) {
+			Intent intent = new Intent(caller, UnlockCryptActivity.class);
+			caller.startActivityForResult(intent, UNLOCK_CRYPT_REQUEST_CODE);
+			//caller.startActivity(intent);
+		}
 	}
 	
 	@Override
@@ -69,23 +71,32 @@ public class FpmListActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		layoutInflater = LayoutInflater.from(this);
 		broadcastReceiver = new FpmBroadcastReceiver(this);
-		registerReceiver(broadcastReceiver, FpmBroadcastReceiver.createIntentFilter());
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		unregisterReceiver(broadcastReceiver);
+		broadcastReceiver.unregister();
 	}
 	
 	@Override
-	public void onWindowFocusChanged(boolean hasFocus) {
-		super.onWindowFocusChanged(hasFocus);
-		if (hasFocus && !getFpmApplication().isCryptOpen()) {
-			// initiate attempt to lock db
-			onFpmLock();
-		}
+	protected void onResume() {
+		super.onResume();
+		onFpmLock();
 	}
+	
+	
+//	@Override
+//	public void onWindowFocusChanged(boolean hasFocus) {
+//		super.onWindowFocusChanged(hasFocus);
+//		if (hasFocus && !getFpmApplication().isCryptOpen()) {
+//			// initiate attempt to lock db
+//			// window is focused whenever the dialogs are dismissed
+//			// so this causes password to continue prompting until
+//			// acitivity finishes
+//			onFpmLock();
+//		}
+//	}
 
 	/**
 	 * Call back when openning FPM store generates an error.
@@ -94,7 +105,8 @@ public class FpmListActivity extends ListActivity {
 	 * 
 	 * @param msg
 	 */
-	protected void onFpmError(int msg) {
+	@Override
+	public void onFpmError(int msg) {
 		dismissDialogs();
 		
 		if (msg != 0 && msg != R.string.exception_fpm_passphrase) {
@@ -115,6 +127,8 @@ public class FpmListActivity extends ListActivity {
 			}
 			dialogBuilder.create().show();
 		} else {
+			// no error prompt for bad passphrase,
+			// just go back and prompt again.
 			onFpmLock();
 		}
 	}
@@ -124,12 +138,13 @@ public class FpmListActivity extends ListActivity {
 	 * sub-classes can override this method but, should
 	 * call super.onFpmUnlock()
 	 */
-	protected void onFpmUnlock() {
+	@Override
+	public void onFpmUnlock() {
 		// once datastore is unlocked
 		// clear any passphrase related dialogs
-		// and notify listView of data changes
 		dismissDialogs();
-		notifyDataSetChanged();
+		setResult(RESULT_OK);
+		finish();
 	}
 	
 	/**
@@ -138,10 +153,8 @@ public class FpmListActivity extends ListActivity {
 	 * take care to call super.onFpmLock()
 	 * if they want user to be prompted for passphrase.
 	 */
-	protected void onFpmLock() {
-		// fpm db lock event is recevied
-		notifyDataSetChanged();
-
+	@Override
+	public void onFpmLock() {
 		if (getFpmApplication().getCryptState() != FpmApplication.STATE_BUSY) {
 			createPassphraseDialog().show();
 		} else {
@@ -164,14 +177,6 @@ public class FpmListActivity extends ListActivity {
 			progressDialog = null;
 		}
 	}
-	
-	protected void notifyDataSetChanged() {
-		// notify the adapter of datachange (if supported)
-		Adapter adapter = getListAdapter();
-		if (adapter instanceof BaseAdapter) {
-			((BaseAdapter) adapter).notifyDataSetChanged();
-		}
-	}
 
 	/**
 	 * Callback once the user has entered a passphrase.
@@ -186,20 +191,9 @@ public class FpmListActivity extends ListActivity {
 	 * Callback if user clicks cacnel in passphrase prompt.
 	 */
 	protected void onFpmPassphraseCancel() {
-		setResult(FPM_PASSPHRASE_CANCEL);
+		android.util.Log.d(PasswordItemListActivity.TAG, "onFpmPassphraseCancel()");
+		setResult(RESULT_CANCELED);
 		finish();
-	}
-	
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		// if a child activity's passphrase dialog was canceled
-		// it cascaded to close entire stack. don't want to prompt
-		// again at each activity in the stack
-		if (resultCode == FPM_PASSPHRASE_CANCEL) {
-			setResult(FPM_PASSPHRASE_CANCEL);
-			finish();
-		}
 	}
 
 	/**
@@ -271,41 +265,5 @@ public class FpmListActivity extends ListActivity {
 		}
 	
 	}
-	
-	/**
-	 * A broadcast receiver which calls our onLock, onUnlock methods
-	 * when fpm broadcasts are received. 
-	 * 
-	 * @author braiden
-	 *
-	 */
-	public static class FpmBroadcastReceiver extends BroadcastReceiver {
 
-		private FpmListActivity activity;
-		
-		public FpmBroadcastReceiver(FpmListActivity activity) {
-			this.activity = activity;
-		}
-		
-		public static IntentFilter createIntentFilter() {
-			IntentFilter filter = new IntentFilter();
-			filter.addAction(FpmApplication.ACTION_FPM_LOCK);
-			filter.addAction(FpmApplication.ACTION_FPM_UNLOCK);
-			filter.addAction(FpmApplication.ACTION_FPM_FAIL);
-			return filter;
-		}
-		
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			if (FpmApplication.ACTION_FPM_UNLOCK.equals(intent.getAction())) {
-				activity.onFpmUnlock();
-			} else if (FpmApplication.ACTION_FPM_LOCK.equals(intent.getAction())) {
-				activity.onFpmLock();
-			} else if (FpmApplication.ACTION_FPM_FAIL.equals(intent.getAction())) {
-				activity.onFpmError(intent.getIntExtra(FpmApplication.EXTRA_MSG, 0));
-			}
-		}
-		
-	}
-	
 }

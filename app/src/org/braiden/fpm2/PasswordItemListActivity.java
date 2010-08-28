@@ -34,6 +34,7 @@ import org.apache.commons.lang.StringUtils;
 import org.braiden.fpm2.model.PasswordItem;
 
 import android.app.Activity;
+import android.app.ListActivity;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
@@ -57,7 +58,7 @@ import android.widget.TextView;
  * @author braiden
  *
  */
-public class PasswordItemListActivity extends FpmListActivity {
+public class PasswordItemListActivity extends ListActivity implements FpmBroadcastReceiver.Listener {
 	
 	public final static String EXTRA_ID = "id";
 	
@@ -66,6 +67,7 @@ public class PasswordItemListActivity extends FpmListActivity {
 	
 	private Spinner categoryPicker;
 	private boolean isCategoryPickerInitialized;
+	private FpmBroadcastReceiver receiver;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -77,6 +79,7 @@ public class PasswordItemListActivity extends FpmListActivity {
     	setListAdapter(adapter);
     	getListView().setTextFilterEnabled(true);
     	
+    	// get all the categories
     	List<String> allCategories = new ArrayList<String>(20);
     	allCategories.add(getString(R.string.all_category));
     	allCategories.add(getString(R.string.default_category));
@@ -85,11 +88,12 @@ public class PasswordItemListActivity extends FpmListActivity {
     		allCategories.addAll(getFpmApplication().getCategories());
     	}
     	
-    	// populate the category picker with some default values
+    	// populate the category picker with default values, and any other categories (if availible)
     	categoryPicker = (Spinner) findViewById(R.id.category_picker);
     	final ArrayAdapter<String> categoryData = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, allCategories );
     	categoryData.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
     	categoryPicker.setAdapter(categoryData);
+    	// on change of picker, we force ListView's filter to be re-applied
     	categoryPicker.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override
 			public void onItemSelected(AdapterView<?> parentView, View selectedItem, int position, long id) {
@@ -118,10 +122,46 @@ public class PasswordItemListActivity extends FpmListActivity {
 			}
 		});
     	
+    	receiver = new FpmBroadcastReceiver(this);
+    	
+		UnlockCryptActivity.unlockIfRequired(this);
     }
     
 	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		receiver.unregister();
+	}
+
+	@Override
+	public void onWindowFocusChanged(boolean hasFocus) {
+		super.onWindowFocusChanged(hasFocus);
+		if (hasFocus) {
+			// whenever this view obtains focus, it tries
+			// to unlock the fpm store, if the store
+			// is not availible, a new acitivity is started
+			// to unlock it.
+			UnlockCryptActivity.unlockIfRequired(this);
+		}
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		android.util.Log.d(TAG, "onActivityResult(requestCode=" + requestCode 
+					+ ", resultCode=" + resultCode
+					+ ", itent.action=" + (data == null ? null : data.getAction()) + ")");
+		
+		// if the password unlock activity was canceled,
+		// this activity can't continue, finish it.
+		if (requestCode == UnlockCryptActivity.UNLOCK_CRYPT_REQUEST_CODE
+				&& resultCode == RESULT_CANCELED) {
+			finish();
+		}
+	}
+
+	@Override
 	public boolean onSearchRequested() {
+		// don't pop-up the search widget if the crypt is locked
 		if (getFpmApplication().isCryptOpen()) {
 			return super.onSearchRequested();
 		} else {
@@ -132,6 +172,7 @@ public class PasswordItemListActivity extends FpmListActivity {
 	@Override
 	protected void onNewIntent(Intent intent) {
 		super.onNewIntent(intent);
+		// if this acitity receives input from search widget, apply the search string a listView text filter
 		if (intent.getAction().equals(Intent.ACTION_SEARCH) && getFpmApplication().isCryptOpen()) {
 			String searchString = intent.getStringExtra(SearchManager.QUERY);
 			getListView().setFilterText(searchString);
@@ -140,14 +181,29 @@ public class PasswordItemListActivity extends FpmListActivity {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	protected void onFpmUnlock() {
-		super.onFpmUnlock();
+	public void onFpmUnlock() {
+		android.util.Log.d(TAG, "onFpmUnlock()");
+		// if the categories have never been initialized,
+		// initialize them now.
 		if (!isCategoryPickerInitialized) {
 			isCategoryPickerInitialized = true;
 			for (String cat : getFpmApplication().getCategories()) {
 				((ArrayAdapter<String>) categoryPicker.getAdapter()).add(cat);
 			}
 		}
+		((BaseAdapter) getListAdapter()).notifyDataSetChanged();
+	}
+
+	@Override
+	public void onFpmError(int err) {
+		android.util.Log.d(TAG, "onFpmError(" + err + ")");
+	}
+
+	@Override
+	public void onFpmLock() {
+		android.util.Log.d(TAG, "onFpmLock()");
+		((BaseAdapter) getListAdapter()).notifyDataSetChanged();
+		UnlockCryptActivity.unlockIfRequired(this);
 	}
 
 	@Override
@@ -176,6 +232,10 @@ public class PasswordItemListActivity extends FpmListActivity {
     	Intent intent = new Intent(this, ViewPasswordItemActivity.class);
     	intent.putExtra(EXTRA_ID, id);
     	startActivityForResult(intent, 0);
+	}
+	
+	protected FpmApplication getFpmApplication() {
+		return (FpmApplication) getApplication();
 	}
 	
 	/**
@@ -288,7 +348,7 @@ public class PasswordItemListActivity extends FpmListActivity {
 			List<PasswordItem> allItems = getPasswordItems();
 			FilterResults result = new FilterResults();
 			
-			// android.util.Log.d(TAG, "performFiltering(string=" + constraintSeq + ", category=" + category + ")");
+			android.util.Log.d(TAG, "performFiltering(string=" + constraintSeq + ", category=" + category + ")");
 			
 			if ((constraint == null || StringUtils.isBlank(constraint)) && category == null) {
 				result.values = allItems;

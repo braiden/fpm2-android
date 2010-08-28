@@ -75,7 +75,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	public static final int STATE_FAILED = 2;
 	// the crypt is currently locked with an unlock operation in progress
 	public static final int STATE_BUSY = 3;
-	
+		
 	public static final String PREF_AUTOLOCK = "fpm_autolock";
 	
 	public static final String EXTRA_MSG = "org.braiden.fpm2.EXTRA_MESSAGE";
