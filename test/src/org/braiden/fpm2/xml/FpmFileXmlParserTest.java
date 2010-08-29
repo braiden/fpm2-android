@@ -37,6 +37,10 @@ public class FpmFileXmlParserTest extends InstrumentationTestCase {
 		assertEquals(fpm.getPasswordItems().get(0).getUser(), "amjedfopdhibbenahobcbjehhgceahbd");
 		assertEquals(fpm.getPasswordItems().get(0).getTitle(), "ndoaklplaoaonbpgjnikehlcdjheclgf");
 
+		for (int n = 0; n < fpm.getPasswordItems().size(); n++) {
+			assertEquals(n, fpm.getPasswordItems().get(n).getId());
+		}
+		
 		assertTrue(fpm.getPasswordItems().get(0).isDefault());
 		assertFalse(fpm.getPasswordItems().get(1).isDefault());		
 	}

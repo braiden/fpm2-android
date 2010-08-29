@@ -30,6 +30,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
 
 /**
  * A broadcast receiver which calls our onLock, onUnlock methods
@@ -40,12 +41,20 @@ import android.content.IntentFilter;
  */
 public class FpmBroadcastReceiver extends BroadcastReceiver {
 
+	private static final String TAG = "FpmBroadcastReceiver";
 	private Context context;
+	private Listener listener;
 	
 	public FpmBroadcastReceiver(Context activity) {
+		this(activity, (Listener) activity);
+	}
+	
+	public FpmBroadcastReceiver(Context activity, Listener listener) {
+		this.listener = listener;
 		this.context = activity;
 		this.context.registerReceiver(this, createIntentFilter());
 	}
+	
 	
 	public void unregister() {
 		this.context.unregisterReceiver(this);
@@ -61,14 +70,13 @@ public class FpmBroadcastReceiver extends BroadcastReceiver {
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (context instanceof Listener) {
-			if (FpmApplication.ACTION_FPM_UNLOCK.equals(intent.getAction())) {
-				((Listener) context).onFpmUnlock();
-			} else if (FpmApplication.ACTION_FPM_LOCK.equals(intent.getAction())) {
-				((Listener) context).onFpmLock();
-			} else if (FpmApplication.ACTION_FPM_FAIL.equals(intent.getAction())) {
-				((Listener) context).onFpmError(intent.getIntExtra(FpmApplication.EXTRA_MSG, 0));
-			}
+		Log.d(TAG, "onReceive(this=" + this + ", action=" + intent.getAction() + ")");
+		if (FpmApplication.ACTION_FPM_UNLOCK.equals(intent.getAction())) {
+			listener.onFpmUnlock();
+		} else if (FpmApplication.ACTION_FPM_LOCK.equals(intent.getAction())) {
+			listener.onFpmLock();
+		} else if (FpmApplication.ACTION_FPM_FAIL.equals(intent.getAction())) {
+			listener.onFpmError(intent.getIntExtra(FpmApplication.EXTRA_MSG, 0));
 		}
 	}
 	

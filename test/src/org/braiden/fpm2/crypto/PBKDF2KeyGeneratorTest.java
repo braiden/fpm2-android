@@ -7,7 +7,8 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 import org.braiden.fpm2.crypto.PBKDF2KeyGenerator;
-import org.braiden.fpm2.util.Hex;
+
+import test.Hex;
 
 import android.util.Log;
 

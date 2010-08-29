@@ -206,10 +206,15 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	 * passphrase again, before accessing any data. 
 	 */
 	public void closeCrypt() {
-		fpmCrypt.close();
-		state = STATE_LOCKED;
-		failureMsg = 0;
-		broadcastState();
+		if (state == STATE_UNLOCKED) {
+			fpmCrypt.close();
+			state = STATE_LOCKED;
+			failureMsg = 0;
+			broadcastState();
+		} else if (state == STATE_FAILED) {
+			failureMsg = 0;
+			state = STATE_LOCKED;
+		}
 	}
 
 	/**
