@@ -1,6 +1,7 @@
 package org.braiden.fpm2;
 
 import org.braiden.fpm2.model.PasswordItem;
+import static android.test.MoreAsserts.*;
 
 import android.test.InstrumentationTestCase;
 
@@ -20,6 +21,7 @@ public class FpmCryptTest extends InstrumentationTestCase {
 		assertEquals("Blog", item.getCategory());
 		assertEquals("This is a sample note.", item.getNotes());
 		assertEquals("Web", item.getLauncher());
+		assertContentsInOrder(fpmCrypt.getCategories(), (Object[]) new String[] {"Banking", "Blog", "Linux"});
 	}
 
 }

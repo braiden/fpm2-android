@@ -53,7 +53,7 @@ public class PropertyUtilsTest extends TestCase {
 		bean.setUser("user");
 		bean.setDefault(true);
 		Map<String, Object> beanMap = PropertyUtils.describe(bean);
-		assertEquals(8, beanMap.size());
+		assertEquals(9, beanMap.size());
 		for (Entry<String, Object> e : beanMap.entrySet()) {
 			if (String.class.isAssignableFrom(e.getValue().getClass()))
 				assertEquals(e.getKey(), e.getValue());
