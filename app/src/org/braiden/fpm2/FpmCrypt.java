@@ -69,9 +69,11 @@ public class FpmCrypt {
 	// testing only cipher so app is fast
 	public final static String FPM_CIPHER_NULL = "null";
 	
+	public final static String PROPERTY_USER = "user";
+	public final static String PROPERTY_PASSWORD = "password";
+	
 	protected final static String AES_VSTRING_HASH_FUNCTION = "SHA256";	
 	protected final static String TAG = "FpmCrypt";
-	protected final static String PROPERTY_PASSWORD = "password";
 		
 	private FpmCipher cipher;
 	private FpmKeyGenerator keyGenerator;

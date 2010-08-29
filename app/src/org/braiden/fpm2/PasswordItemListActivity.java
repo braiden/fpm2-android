@@ -40,6 +40,7 @@ import android.app.SearchManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -265,10 +266,10 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 				launchItem(info.id);
 				return true;
 			case R.id.context_menu_copy_password:
-				copyItemProperty(info.id, "password");
+				copyItemProperty(info.id, FpmCrypt.PROPERTY_PASSWORD);
 				return true;
 			case R.id.context_menu_copy_user:
-				copyItemProperty(info.id, "user");
+				copyItemProperty(info.id, FpmCrypt.PROPERTY_USER);
 				return true;
 			default:
 				return super.onContextItemSelected(item);
@@ -280,7 +281,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 		if (item != null) {
 			try {
 				String value = (String) PropertyUtils.getProperty(item, property);
-				if ("password".equals(property)) {
+				if (FpmCrypt.PROPERTY_PASSWORD.equals(property)) {
 					value = getFpmApplication().decrypt(value);
 				}
 				ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
@@ -295,6 +296,11 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 		PasswordItem item = getFpmApplication().getPasswordItemById(id);
 		if (item != null) {
 			try {
+				boolean copyPassword = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+						FpmApplication.PREF_COPY_PASSWORD, false);
+				if (copyPassword) {
+					copyItemProperty(id, FpmCrypt.PROPERTY_PASSWORD);
+				}
 				Uri uri = Uri.parse(item.getUrl());
 				Intent intent = new Intent(Intent.ACTION_VIEW, uri);
 				startActivity(intent);

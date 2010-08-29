@@ -4,7 +4,13 @@
 
     <PreferenceCategory
             android:title="@string/general">
-                
+       		
+		<CheckBoxPreference
+				android:key="fpm_copy_password_on_launch"
+                android:title="@string/pref_copy_password_on_launch"
+                android:summary="@string/pref_copy_password_on_launch_summary"
+                android:defaultValue="false" />
+                     
         <ListPreference
                 android:key="fpm_autolock"                
                 android:title="@string/pref_autolock"
@@ -13,7 +19,7 @@
                 android:entryValues="@array/pref_autolock_values"
                 android:dialogTitle="@string/pref_autolock_after"
                 android:defaultValue="60" />
-
+		
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -77,6 +77,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	public static final int STATE_BUSY = 3;
 		
 	public static final String PREF_AUTOLOCK = "fpm_autolock";
+	public static final String PREF_COPY_PASSWORD = "fpm_copy_password_on_launch";
 	
 	public static final String EXTRA_MSG = "org.braiden.fpm2.EXTRA_MESSAGE";
 	
