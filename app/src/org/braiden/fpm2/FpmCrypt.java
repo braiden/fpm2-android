@@ -43,6 +43,8 @@ import org.apache.commons.lang.StringUtils;
 import org.braiden.fpm2.crypto.FpmCipher;
 import org.braiden.fpm2.crypto.FpmKeyGenerator;
 import org.braiden.fpm2.crypto.JCEFpmCipher;
+import org.braiden.fpm2.crypto.NullFpmCipher;
+import org.braiden.fpm2.crypto.NullFpmKeyGenerator;
 import org.braiden.fpm2.crypto.PBKDF2FpmKeyGenerator;
 import org.braiden.fpm2.model.DataObject;
 import org.braiden.fpm2.model.FpmFile;
@@ -64,6 +66,8 @@ import android.util.Log;
 public class FpmCrypt {
 	
 	public final static String FPM_CIPHER_AES_256 = "AES-256";
+	// testing only cipher so app is fast
+	public final static String FPM_CIPHER_NULL = "null";
 	
 	protected final static String AES_VSTRING_HASH_FUNCTION = "SHA256";	
 	protected final static String TAG = "FpmCrypt";
@@ -228,6 +232,8 @@ public class FpmCrypt {
 	protected boolean verifyVstring() throws GeneralSecurityException {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return aesVerifyVstring();
+		} else if (FPM_CIPHER_NULL.equals(fpmFile.getKeyInfo().getCipher())) {
+			return fpmFile.getKeyInfo().getVstring().equals(new String(key));
 		}
 		return false;
 	}
@@ -277,6 +283,8 @@ public class FpmCrypt {
 	protected static FpmCipher createCipher(FpmFile fpmFile) throws GeneralSecurityException {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return new JCEFpmCipher();
+		} else if (FPM_CIPHER_NULL.equals(fpmFile.getKeyInfo().getCipher())) {
+			return new NullFpmCipher();
 		}
 		return null;
 	}
@@ -292,6 +300,8 @@ public class FpmCrypt {
 	protected static FpmKeyGenerator createKeyGenerator(FpmFile fpmFile) throws GeneralSecurityException {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return new PBKDF2FpmKeyGenerator();
+		} else if (FPM_CIPHER_NULL.equals(fpmFile.getKeyInfo().getCipher())) {
+			return new NullFpmKeyGenerator();
 		}
 		return null;
 	}

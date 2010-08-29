@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<FPM full_version="00.75.00" min_version="00.75.00" display_version="0.75">
+	<KeyInfo cipher="null" salt="" vstring="password" />
+	<LauncherList>
+		<LauncherItem>
+			<title>Web</title>
+			<cmdline></cmdline>
+			<copy_user></copy_user>
+			<copy_password></copy_password>
+		</LauncherItem>
+	</LauncherList>
+	<PasswordList>
+		<PasswordItem>
+			<title>Amazon</title>
+			<user>sample@gmail.com</user>
+			<url>http://amazon.com</url>
+			<password>abc1234</password>
+			<notes></notes>
+			<category>Shopping</category>
+			<launcher>Web</launcher>
+			<default />
+		</PasswordItem>
+		<PasswordItem>
+			<title>Gmail</title>
+			<user>sample@gmail.com</user>
+			<url>https://www.google.com/accounts/Login</url>
+			<password>secret</password>
+			<notes></notes>
+			<category>Personal</category>
+			<launcher>Web</launcher>
+		</PasswordItem>		
+		<PasswordItem>
+			<title>Moneybank</title>
+			<user>santos.l.halper</user>
+			<url>http://moneybank.com</url>
+			<password>chewy</password>
+			<notes></notes>
+			<category>Banking</category>
+			<launcher>Web</launcher>
+			<default />
+		</PasswordItem>
+	</PasswordList>
+</FPM>
