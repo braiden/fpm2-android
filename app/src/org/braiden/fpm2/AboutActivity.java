@@ -1,5 +1,6 @@
 package org.braiden.fpm2;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.braiden.fpm2.util.IOUtils;
@@ -21,7 +22,7 @@ public class AboutActivity extends Activity {
 		InputStream is = getResources().openRawResource(R.raw.about);
 		try {
 			view.loadData(IOUtils.read(is), "text/html", "utf-8");
-		} catch (Exception e) {
+		} catch (IOException e) {
 			Log.w(TAG, "Failed to read resource.", e);
 		}
 	}
