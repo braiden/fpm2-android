@@ -1,4 +1,4 @@
-package test;
+package org.braiden.fpm2.test;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more

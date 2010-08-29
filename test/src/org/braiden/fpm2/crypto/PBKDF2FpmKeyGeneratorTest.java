@@ -1,6 +1,6 @@
 package org.braiden.fpm2.crypto;
 
-import test.Hex;
+import org.braiden.fpm2.test.Hex;
 
 import junit.framework.TestCase;
 

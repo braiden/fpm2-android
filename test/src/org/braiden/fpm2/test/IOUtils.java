@@ -1,4 +1,4 @@
-package test;
+package org.braiden.fpm2.test;
 
 import java.io.IOException;
 import java.io.InputStream;
