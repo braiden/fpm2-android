@@ -33,9 +33,11 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 /**
  * View for unlocking the fpm database.
@@ -243,6 +245,16 @@ public class UnlockCryptActivity extends Activity implements FpmBroadcastReceive
 					}
 				})
 				.create();
+			editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+				@Override
+				public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+					passphraseDialog.dismiss();
+    				String passphrase = editText.getText().toString();
+    				editText.setText("");
+    				onFpmPassphraseOk(passphrase);
+					return true;
+				}
+			});
 		}
 		return passphraseDialog;
 	}
