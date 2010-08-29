@@ -25,6 +25,7 @@
         android:capitalize="none"
         android:gravity="fill_horizontal"
         android:password="true"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:singleLine="true" />
         
 </LinearLayout>
