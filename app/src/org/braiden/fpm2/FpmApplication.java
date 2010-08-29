@@ -105,7 +105,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		handler = new Handler();
+		handler = new Handler(getMainLooper());
 		prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		prefs.registerOnSharedPreferenceChangeListener(this);
 	}
@@ -286,8 +286,11 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 
 	private void scheduleAutoLock() {
 		if (isCryptOpen()) {
+			
 			long autoLockMilliseconds = getAutoLockMilliseconds();
 			
+			Log.d(TAG, "(Re)scheduling auto-lock for " + autoLockMilliseconds + "ms.");
+						
 			if (autoLockTimer != null) {
 				autoLockTimer.cancel();
 				autoLockTimer = null;
@@ -302,6 +305,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 						// the UI event queue, the lets us ensure
 						// that access to FpmApplication remains
 						// single threaded. (and state is accurate)
+						Log.d(TAG, "scheduleAutoLock() timer tick, posting runnable to close crypt.");
 						handler.post(new Runnable() {
 							@Override
 							public void run() {
