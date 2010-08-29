@@ -76,6 +76,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 	private Spinner categoryPicker;
 	private boolean isCategoryPickerInitialized;
 	private FpmBroadcastReceiver receiver;
+	private boolean isPaused;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -153,6 +154,18 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 		super.onDestroy();
 		receiver.unregister();
 	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		isPaused = true;
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		isPaused = false;
+	}
 
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
@@ -224,7 +237,9 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 	public void onFpmLock() {
 		android.util.Log.d(TAG, "onFpmLock()");
 		((BaseAdapter) getListAdapter()).notifyDataSetChanged();
-		UnlockCryptActivity.unlockIfRequired(this);
+		if (!isPaused) {
+			UnlockCryptActivity.unlockIfRequired(this);
+		}
 	}
 
 	@Override
