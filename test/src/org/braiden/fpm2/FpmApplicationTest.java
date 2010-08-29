@@ -31,6 +31,30 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		return (FpmApplication) getActivity().getApplication();
 	}
 	
+	protected void open(final String passphrase) throws Throwable {
+		runTestOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				getFpmApplication().openCrypt(passphrase);
+			}
+		});
+		getInstrumentation().waitForIdleSync();
+	}
+	
+	protected void close() throws Throwable {
+		runTestOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				getFpmApplication().closeCrypt();
+			}
+		});
+		getInstrumentation().waitForIdleSync();
+	}
+	
+	public void testAutoLock() throws Exception {
+		
+	}
+	
 	public void testStates() throws Throwable {	
 		// override where the fpm file is openned from for this unit test
 		getFpmApplication().setFpmFileLocator(new TestAssetsFpmFileLocator("plain.xml", getInstrumentation().getContext()));
@@ -51,13 +75,7 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		assertNull(getFpmApplication().getPasswordItemById(0));
 		
 		// try to open the crypt
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				getFpmApplication().openCrypt("WRONG_PASSWORD");
-			}
-		});
-		getInstrumentation().waitForIdleSync();
+		open("THIS_IS_THE_WRONG_PASSPHRASE");
 		
 		// once UI has services thread, should imediately show as busy
 		assertFalse(getFpmApplication().isCryptOpen());
@@ -76,13 +94,7 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		}
 
 		// try to close
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				getFpmApplication().closeCrypt();
-			}
-		});
-		getInstrumentation().waitForIdleSync();
+		close();
 		assertFalse(getFpmApplication().isCryptOpen());
 		assertEquals(FpmApplication.STATE_LOCKED, getFpmApplication().getCryptState());
 		synchronized (this) {
@@ -92,13 +104,7 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		}
 		
 		// try to open the crypt
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				getFpmApplication().openCrypt("password");
-			}
-		});
-		getInstrumentation().waitForIdleSync();
+		open("password");
 		
 		// give the db some time to try to open
 		Thread.sleep(2000L);
@@ -115,15 +121,9 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		assertEquals(getFpmApplication().getPasswordItems().size(), 3);
 		assertEquals(getFpmApplication().getPasswordItemById(0).getTitle(), "Amazon");
 		
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				getFpmApplication().closeCrypt();
-			}
-		});
-		getInstrumentation().waitForIdleSync();
 
-		// check for valid data, and event broadcasts
+		// close, and change state
+		close();
 		assertFalse(getFpmApplication().isCryptOpen());
 		assertEquals(FpmApplication.STATE_LOCKED, getFpmApplication().getCryptState());
 		synchronized (this) {
@@ -132,12 +132,8 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 			assertEquals(1, eventFpmError);
 		}
 		
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				getFpmApplication().closeCrypt();
-			}
-		});
+		// close, again, and make sure event is not reboardcast
+		close();
 		getInstrumentation().waitForIdleSync();
 		synchronized (this) {
 			assertEquals(1, eventFpmUnlock);
