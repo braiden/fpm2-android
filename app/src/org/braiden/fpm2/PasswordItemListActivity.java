@@ -379,6 +379,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 				convertView = layoutInflater.inflate(R.layout.password_item_row, null);
 				viewHolder.title = (TextView) convertView.findViewById(R.id.passwordItemRowTitle);
 				viewHolder.url = (TextView) convertView.findViewById(R.id.passwordItemRowUrl);
+				viewHolder.user = (TextView) convertView.findViewById(R.id.passwordItemRowUser);
 				convertView.setTag(viewHolder);
 			} else {
 				viewHolder = (ViewHolder) convertView.getTag();
@@ -386,6 +387,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 			
 			viewHolder.title.setText(item.getTitle());
 			viewHolder.url.setText(item.getUrl());
+			viewHolder.user.setText(item.getUser());
 
 			return convertView;
 		}
@@ -403,6 +405,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 		private static class ViewHolder {
 			public TextView title;
 			public TextView url;
+			public TextView user;
 		}	
 		
 	}
