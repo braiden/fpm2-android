@@ -34,7 +34,10 @@
     <string name="pref_autolock_summary">How long after entering passphrase should FPM database remain open.</string>
     <string name="pref_autolock_after">Lock After...</string>
     <string name="pref_copy_password_on_launch">Copy password</string>
-    <string name="pref_copy_password_on_launch_summary">If option is selected, the password will be copied to clipboard when an item is launched.</string>
+    <string name="pref_copy_password_on_launch_summary">If selected, the password will be copied to clipboard when an item is launched.</string>
+    <string name="pref_default_action_launch">Launch as default</string>
+    <string name="pref_default_action_launch_summary">Launch, instead of view, when an item is selected.</string>
+    
     
     <string name="exception_file_not_found">FPM file not found.</string>
     <string name="exception_io">I/O Error reading file.</string>

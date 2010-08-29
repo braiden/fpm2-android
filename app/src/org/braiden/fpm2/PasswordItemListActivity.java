@@ -252,7 +252,13 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 
 	@Override
 	protected void onListItemClick(ListView listView, View view, int position, long id) {
-		viewItem(id);
+		boolean launch =  PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+				FpmApplication.PREF_LAUNCH_DEFAULT, false);
+		if (launch) {
+			launchItem(id);
+		} else {
+			viewItem(id);
+		}
 	}
 	
 	@Override

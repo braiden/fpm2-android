@@ -10,7 +10,13 @@
                 android:title="@string/pref_copy_password_on_launch"
                 android:summary="@string/pref_copy_password_on_launch_summary"
                 android:defaultValue="false" />
-                     
+         		
+		<CheckBoxPreference
+				android:key="fpm_default_action_launch"
+                android:title="@string/pref_default_action_launch"
+                android:summary="@string/pref_default_action_launch_summary"
+                android:defaultValue="false" />
+                                   
         <ListPreference
                 android:key="fpm_autolock"                
                 android:title="@string/pref_autolock"
