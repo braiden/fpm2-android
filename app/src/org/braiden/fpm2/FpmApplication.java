@@ -29,6 +29,7 @@ package org.braiden.fpm2;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
@@ -92,12 +93,13 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	private Timer autoLockTimer = null;
 	private SharedPreferences prefs;
 	private int failureMsg = 0;
+	private FpmFileLocator fileLocator = new ExternalStorageFpmFileLocator();
 	// The ListView filter accesses fpm application from
-	// another thread where list processing occurs. none
+	// another thread where filtering occurs. None
 	// of the methods of this class are syncrhonized, we
-	// make this static so state is pseudo accurate.
-	// but FpmApplication is not thread safe and access
-	// from the filter is an ugly hack.
+	// make this volatile so state is pseudo accurate.
+	// But, FpmApplication is not thread safe and access
+	// and is generally meant to come only from UI thread.
 	volatile private int state = STATE_LOCKED;
 	
 	@Override
@@ -163,7 +165,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 				int result = 0;
 				
 				try {
-					fpmCrypt.open(new FileInputStream(FPM_FILE), params[0]);
+					fpmCrypt.open(fileLocator.open(FPM_FILE), params[0]);
 				} catch (FileNotFoundException e) {
 					result = R.string.exception_file_not_found;
 					Log.w(TAG, "Failed to open FPM database.", e);
@@ -271,7 +273,17 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 			return items.get((int) id);
 		}
 	}
-	
+
+	/**
+	 * Mainly for unit tests which try to open fpm file
+	 * from test assets, maybe otherwise useful?
+	 * Allow overriding where the db is openned from.
+	 * @param fileLocator
+	 */
+	public void setFpmFileLocator(FpmFileLocator fileLocator) {
+		this.fileLocator = fileLocator;
+	}
+
 	private void scheduleAutoLock() {
 		if (isCryptOpen()) {
 			long autoLockMilliseconds = getAutoLockMilliseconds();
@@ -332,6 +344,17 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 			Log.w(TAG, "\"" + PREF_AUTOLOCK + "\" has invalid value \"" + stringResult + "\". Will default to 1 minute.");
 		}
 		return result;
+	}
+
+	public static interface FpmFileLocator {
+		InputStream open(String file) throws IOException;
+	}
+	
+	public static class ExternalStorageFpmFileLocator implements FpmFileLocator {
+		@Override
+		public InputStream open(String file) throws IOException {
+			return new FileInputStream(file);
+		}
 	}
 	
 }
