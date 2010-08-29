@@ -255,9 +255,9 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 		boolean launch =  PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
 				FpmApplication.PREF_LAUNCH_DEFAULT, false);
 		if (launch) {
-			launchItem(id);
+			launchItem(this, id);
 		} else {
-			viewItem(id);
+			viewItem(this, id);
 		}
 	}
 	
@@ -266,31 +266,32 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 		AdapterView.AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 		switch (item.getItemId()) {
 			case R.id.context_menu_view:
-				viewItem(info.id);
+				viewItem(this, info.id);
 				return true;
 			case R.id.context_menu_launch:
-				launchItem(info.id);
+				launchItem(this, info.id);
 				return true;
 			case R.id.context_menu_copy_password:
-				copyItemProperty(info.id, FpmCrypt.PROPERTY_PASSWORD);
+				copyItemProperty(this, info.id, FpmCrypt.PROPERTY_PASSWORD);
 				return true;
 			case R.id.context_menu_copy_user:
-				copyItemProperty(info.id, FpmCrypt.PROPERTY_USER);
+				copyItemProperty(this, info.id, FpmCrypt.PROPERTY_USER);
 				return true;
 			default:
 				return super.onContextItemSelected(item);
 		}
 	}
 
-	protected void copyItemProperty(long id, String property) {
-		PasswordItem item = getFpmApplication().getPasswordItemById(id);
+	public static void copyItemProperty(Activity activity, long id, String property) {
+		FpmApplication app = (FpmApplication) activity.getApplication();
+		PasswordItem item = app.getPasswordItemById(id);
 		if (item != null) {
 			try {
 				String value = (String) PropertyUtils.getProperty(item, property);
 				if (FpmCrypt.PROPERTY_PASSWORD.equals(property)) {
-					value = getFpmApplication().decrypt(value);
+					value = app.decrypt(value);
 				}
-				ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+				ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(CLIPBOARD_SERVICE);
 				clipboard.setText(value);
 			} catch (Exception e) {
 				Log.w(TAG, "Failed to access property \"" + property + "\" of item id " + id + ".", e);
@@ -298,28 +299,28 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 		}
 	}
 
-	protected void launchItem(long id) {		
-		PasswordItem item = getFpmApplication().getPasswordItemById(id);
+	public static void launchItem(Activity activity, long id) {		
+		PasswordItem item = ((FpmApplication) activity.getApplication()).getPasswordItemById(id);
 		if (item != null) {
 			try {
-				boolean copyPassword = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+				boolean copyPassword = PreferenceManager.getDefaultSharedPreferences(activity).getBoolean(
 						FpmApplication.PREF_COPY_PASSWORD, false);
 				if (copyPassword) {
-					copyItemProperty(id, FpmCrypt.PROPERTY_PASSWORD);
+					copyItemProperty(activity, id, FpmCrypt.PROPERTY_PASSWORD);
 				}
 				Uri uri = Uri.parse(item.getUrl());
 				Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-				startActivity(intent);
+				activity.startActivity(intent);
 			} catch (Exception e) {
 				Log.i(TAG, "Cannot launch item (id=" + id + ").", e);
 			}
 		}
 	}
 
-	protected void viewItem(long id) {
-    	Intent intent = new Intent(this, ViewPasswordItemActivity.class);
+	public static void viewItem(Activity activity, long id) {
+    	Intent intent = new Intent(activity, ViewPasswordItemActivity.class);
     	intent.putExtra(EXTRA_ID, id);
-    	startActivityForResult(intent, 0);
+    	activity.startActivity(intent);
 	}
 
 	protected FpmApplication getFpmApplication() {

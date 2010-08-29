@@ -109,6 +109,8 @@ public class ViewPasswordItemActivity extends ListActivity {
 					text.setText(password);
 				}
 			}
+		} else if (PasswordItemPropertyListAdapter.TITLES[position] == R.string.password_item_url) {
+			PasswordItemListActivity.launchItem(this, this.id);
 		}
 	}
 
@@ -143,7 +145,13 @@ public class ViewPasswordItemActivity extends ListActivity {
 			this.layoutInflater = LayoutInflater.from(context);
 			this.passwordItem = passwordItem;
 		}
-		
+
+		@Override
+		public boolean isEnabled(int position) {
+			return TITLES[position] == R.string.password_item_password
+					|| TITLES[position] == R.string.password_item_url;
+		}
+
 		@Override
 		public int getCount() {
 			return PROPERTIES.length;
