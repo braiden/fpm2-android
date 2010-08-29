@@ -7,4 +7,10 @@
   <item android:id="@+id/context_menu_launch"
   		android:title="@string/launch" />
   
+  <item android:id="@+id/context_menu_copy_password"
+  		android:title="@string/copy_password" />
+  
+  <item android:id="@+id/context_menu_copy_user"
+  		android:title="@string/copy_user" />
+  
 </menu>

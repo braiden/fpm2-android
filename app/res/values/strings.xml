@@ -25,6 +25,8 @@
     
     <string name="view">View</string>
     <string name="launch">Launch</string>
+    <string name="copy_user">Copy User</string>
+    <string name="copy_password">Copy Password</string>
     
     <string name="general">General</string>
     

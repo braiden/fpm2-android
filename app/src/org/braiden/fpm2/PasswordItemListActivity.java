@@ -32,6 +32,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.braiden.fpm2.model.PasswordItem;
+import org.braiden.fpm2.util.PropertyUtils;
 
 import android.app.Activity;
 import android.app.ListActivity;
@@ -39,6 +40,7 @@ import android.app.SearchManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.ClipboardManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -262,8 +264,30 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 			case R.id.context_menu_launch:
 				launchItem(info.id);
 				return true;
+			case R.id.context_menu_copy_password:
+				copyItemProperty(info.id, "password");
+				return true;
+			case R.id.context_menu_copy_user:
+				copyItemProperty(info.id, "user");
+				return true;
 			default:
 				return super.onContextItemSelected(item);
+		}
+	}
+
+	protected void copyItemProperty(long id, String property) {
+		PasswordItem item = getFpmApplication().getPasswordItemById(id);
+		if (item != null) {
+			try {
+				String value = (String) PropertyUtils.getProperty(item, property);
+				if ("password".equals(property)) {
+					value = getFpmApplication().decrypt(value);
+				}
+				ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+				clipboard.setText(value);
+			} catch (Exception e) {
+				Log.w(TAG, "Failed to access property \"" + property + "\" of item id " + id + ".", e);
+			}
 		}
 	}
 
