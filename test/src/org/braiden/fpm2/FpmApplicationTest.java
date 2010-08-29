@@ -1,5 +1,11 @@
 package org.braiden.fpm2;
 
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.braiden.fpm2.FpmApplication.FpmFileLocator;
+
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.test.ActivityInstrumentationTestCase2;
@@ -25,7 +31,10 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		return (FpmApplication) getActivity().getApplication();
 	}
 	
-	public void testStates() throws Throwable {
+	public void testStates() throws Throwable {	
+		// override where the fpm file is openned from for this unit test
+		getFpmApplication().setFpmFileLocator(new TestAssetsFpmFileLocator("plain.xml", getInstrumentation().getContext()));
+		
 		// disable database autolock for this test
 		SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 		defaultPrefs.edit().putString(FpmApplication.PREF_AUTOLOCK, "-1").commit();
@@ -172,6 +181,23 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 			eventFpmUnlock++;
 			notifyAll();
 		}
+	}
+	
+	public static class TestAssetsFpmFileLocator implements FpmFileLocator {
+		
+		private String assetPath;
+		private Context context;
+
+		public TestAssetsFpmFileLocator(String assetPath, Context context) {
+			this.assetPath = assetPath;
+			this.context = context;
+		}
+
+		@Override
+		public InputStream open(String file) throws IOException {
+			return context.getAssets().open(assetPath);
+		}
+		
 	}
 	
 }
