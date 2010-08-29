@@ -26,7 +26,6 @@ package org.braiden.fpm2;
  *
  */
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -41,15 +40,15 @@ import android.content.IntentFilter;
  */
 public class FpmBroadcastReceiver extends BroadcastReceiver {
 
-	private Activity activity;
+	private Context context;
 	
-	public FpmBroadcastReceiver(Activity activity) {
-		this.activity = activity;
-		this.activity.registerReceiver(this, createIntentFilter());
+	public FpmBroadcastReceiver(Context activity) {
+		this.context = activity;
+		this.context.registerReceiver(this, createIntentFilter());
 	}
 	
 	public void unregister() {
-		this.activity.unregisterReceiver(this);
+		this.context.unregisterReceiver(this);
 	}
 	
 	public static IntentFilter createIntentFilter() {
@@ -62,13 +61,13 @@ public class FpmBroadcastReceiver extends BroadcastReceiver {
 	
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (activity instanceof Listener) {
+		if (context instanceof Listener) {
 			if (FpmApplication.ACTION_FPM_UNLOCK.equals(intent.getAction())) {
-				((Listener) activity).onFpmUnlock();
+				((Listener) context).onFpmUnlock();
 			} else if (FpmApplication.ACTION_FPM_LOCK.equals(intent.getAction())) {
-				((Listener) activity).onFpmLock();
+				((Listener) context).onFpmLock();
 			} else if (FpmApplication.ACTION_FPM_FAIL.equals(intent.getAction())) {
-				((Listener) activity).onFpmError(intent.getIntExtra(FpmApplication.EXTRA_MSG, 0));
+				((Listener) context).onFpmError(intent.getIntExtra(FpmApplication.EXTRA_MSG, 0));
 			}
 		}
 	}

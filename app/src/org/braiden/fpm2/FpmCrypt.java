@@ -235,6 +235,11 @@ public class FpmCrypt {
 		if (FPM_CIPHER_AES_256.equals(fpmFile.getKeyInfo().getCipher())) {
 			return aesVerifyVstring();
 		} else if (FPM_CIPHER_NULL.equals(fpmFile.getKeyInfo().getCipher())) {
+			try {
+				Thread.sleep(500L);
+			} catch (InterruptedException e) {
+				Log.w(TAG, e);
+			}
 			return fpmFile.getKeyInfo().getVstring().equals(new String(key));
 		}
 		return false;
