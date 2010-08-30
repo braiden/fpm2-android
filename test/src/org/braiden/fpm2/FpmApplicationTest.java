@@ -33,6 +33,7 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		// override where the fpm file is openned from for this unit test
 		getFpmApplication().setFpmFileLocator(new TestAssetsFpmFileLocator("plain.xml", getInstrumentation().getContext()));
 		try {
+			setAutoLock(-1);
 			close();
 		} catch (Throwable e) {
 			throw new Exception(e);
@@ -96,9 +97,6 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 	}
 
 	public void testStates() throws Throwable {	
-		// disable database autolock for this test
-		setAutoLock(-1);
-		
 		// register junit to listen for events
 		resetEventCounts();
 		FpmBroadcastReceiver receiver = new FpmBroadcastReceiver(getFpmApplication(), FpmApplicationTest.this);				
@@ -181,7 +179,6 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 	}
 	
 	public void testAutoLock() throws Throwable {
-		setAutoLock(-1);
 		openBusyBlock("password");
 		assertTrue(getFpmApplication().isCryptOpen());
 		setAutoLock(1);
