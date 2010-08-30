@@ -32,7 +32,11 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		super.setUp();
 		// override where the fpm file is openned from for this unit test
 		getFpmApplication().setFpmFileLocator(new TestAssetsFpmFileLocator("plain.xml", getInstrumentation().getContext()));
-		getFpmApplication().closeCrypt();
+		try {
+			close();
+		} catch (Throwable e) {
+			throw new Exception(e);
+		}
 		getActivity();
 	}
 
@@ -65,7 +69,7 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		});
 		getInstrumentation().waitForIdleSync();
 		while (getFpmApplication().getCryptState() == FpmApplication.STATE_BUSY) {
-			Thread.sleep(10L);
+			Thread.sleep(100L);
 		}
 		getInstrumentation().waitForIdleSync();
 	}
@@ -79,11 +83,21 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		});
 		getInstrumentation().waitForIdleSync();
 	}
+	
+	protected void setAutoLock(final int seconds) throws Throwable {
+		runTestOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+				defaultPrefs.edit().putString(FpmApplication.PREF_AUTOLOCK, "" + seconds).commit();
+			}
+		});
+		getInstrumentation().waitForIdleSync();
+	}
 
 	public void testStates() throws Throwable {	
 		// disable database autolock for this test
-		SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-		defaultPrefs.edit().putString(FpmApplication.PREF_AUTOLOCK, "-1").commit();
+		setAutoLock(-1);
 		
 		// register junit to listen for events
 		resetEventCounts();
@@ -167,10 +181,10 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 	}
 	
 	public void testAutoLock() throws Throwable {
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+		setAutoLock(-1);
 		openBusyBlock("password");
 		assertTrue(getFpmApplication().isCryptOpen());
-		prefs.edit().putString(FpmApplication.PREF_AUTOLOCK, "1").commit();
+		setAutoLock(1);
 		Thread.sleep(800);
 		assertTrue(getFpmApplication().isCryptOpen());
 		Thread.sleep(300);
@@ -181,7 +195,7 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		assertFalse(getFpmApplication().isCryptOpen());
 		openBusyBlock("password");
 		assertTrue(getFpmApplication().isCryptOpen());
-		prefs.edit().putString(FpmApplication.PREF_AUTOLOCK, "-1").commit();
+		setAutoLock(-1);
 		Thread.sleep(1100);
 		assertTrue(getFpmApplication().isCryptOpen());
 	}
