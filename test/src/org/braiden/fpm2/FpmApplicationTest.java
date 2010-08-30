@@ -5,69 +5,80 @@ import java.io.InputStream;
 
 import org.braiden.fpm2.FpmApplication.FpmFileLocator;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.test.ActivityInstrumentationTestCase2;
+import android.test.InstrumentationTestCase;
 import android.util.Log;
 
-public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutActivity> implements FpmBroadcastReceiver.Listener {
+public class FpmApplicationTest extends InstrumentationTestCase implements FpmBroadcastReceiver.Listener {
 
 	protected static final String TAG = "FpmApplicationTest";
+	
+	private FpmApplication application;
 	
 	private int eventFpmError = 0;
 	private int eventFpmLock = 0;
 	private int eventFpmUnlock = 0;
-		
-	public FpmApplicationTest() {
-		// test for App needs Instrumentation and UI thread
-		// so it extends AcvityTestCase, use AboutActity
-		// as the host activity - i have to use something that
-		// is defined in manifest.
-		super("org.braiden.fpm2", AboutActivity.class);
-	}
 	
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		// override where the fpm file is openned from for this unit test
 		getFpmApplication().setFpmFileLocator(new TestAssetsFpmFileLocator("plain.xml", getInstrumentation().getContext()));
-		try {
-			setAutoLock(-1);
-			close();
-		} catch (Throwable e) {
-			throw new Exception(e);
-		}
-		getActivity();
+		setFpmDatabaseAutolock(-1);
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		getActivity().finish();
+		application.onTerminate();
+		application = null;
 		super.tearDown();
 	}
 
 	protected FpmApplication getFpmApplication() {
-		return (FpmApplication) getActivity().getApplication();
+		if (application == null) {
+			try {
+				application = (FpmApplication) Instrumentation.newApplication(
+						FpmApplication.class,
+						getInstrumentation().getTargetContext());
+			} catch (Exception e) {
+				Log.e(TAG, "Failed to create Application.", e);
+				fail(e.toString());
+			}
+			getInstrumentation().callApplicationOnCreate(application);
+		}
+		return application;
 	}
 	
-	protected void open(final String passphrase) throws Throwable {
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				getFpmApplication().openCrypt(passphrase);
-			}
-		});
+	protected void unlockFpmDatabase(final String passphrase) {
+		try {
+			runTestOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					getFpmApplication().openCrypt(passphrase);
+				}
+			});
+		} catch (Throwable e) {
+			Log.e(TAG, "Failed to open FPM.", e);
+			fail(e.toString());
+		}
 		getInstrumentation().waitForIdleSync();
 	}
 	
-	protected void openBusyBlock(final String passphrase) throws Throwable {
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				getFpmApplication().openCrypt(passphrase);
-			}
-		});
+	protected void unlockFpmDatabaseSync(final String passphrase) throws Exception {
+		try {
+			runTestOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					getFpmApplication().openCrypt(passphrase);
+				}
+			});
+		} catch (Throwable e) {
+			Log.e(TAG, "Failed to open FPM.", e);
+			fail(e.toString());
+		}
 		getInstrumentation().waitForIdleSync();
 		while (getFpmApplication().getCryptState() == FpmApplication.STATE_BUSY) {
 			Thread.sleep(100L);
@@ -75,24 +86,34 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		getInstrumentation().waitForIdleSync();
 	}
 	
-	protected void close() throws Throwable {
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				getFpmApplication().closeCrypt();
-			}
-		});
+	protected void lockFpmDatabaseSync() {
+		try {
+			runTestOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					getFpmApplication().closeCrypt();
+				}
+			});
+		} catch (Throwable e) {
+			Log.e(TAG, "Failed to close FPM.", e);
+			fail(e.toString());
+		}
 		getInstrumentation().waitForIdleSync();
 	}
 	
-	protected void setAutoLock(final int seconds) throws Throwable {
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-				defaultPrefs.edit().putString(FpmApplication.PREF_AUTOLOCK, "" + seconds).commit();
-			}
-		});
+	protected void setFpmDatabaseAutolock(final int seconds) {
+		try {
+			runTestOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(getFpmApplication());
+					defaultPrefs.edit().putString(FpmApplication.PREF_AUTOLOCK, "" + seconds).commit();
+				}
+			});
+		} catch (Throwable e) {
+			Log.e(TAG, "Failed to set lock timeout.", e);
+			fail(e.toString());
+		}
 		getInstrumentation().waitForIdleSync();
 	}
 
@@ -109,14 +130,14 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		assertNull(getFpmApplication().getPasswordItemById(0));
 		
 		// try to open the crypt
-		open("THIS_IS_THE_WRONG_PASSPHRASE");
+		unlockFpmDatabase("THIS_IS_THE_WRONG_PASSPHRASE");
 		
 		// once UI has services thread, should imediately show as busy
 		assertFalse(getFpmApplication().isCryptOpen());
 		assertEquals(FpmApplication.STATE_BUSY, getFpmApplication().getCryptState());
 		
 		// give the db some time to try to open
-		Thread.sleep(2000L);
+		Thread.sleep(1000L);
 		
 		// check for valid data, and event broadcasts
 		assertFalse(getFpmApplication().isCryptOpen());
@@ -128,7 +149,7 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		}
 
 		// try to close
-		close();
+		lockFpmDatabaseSync();
 		assertFalse(getFpmApplication().isCryptOpen());
 		assertEquals(FpmApplication.STATE_LOCKED, getFpmApplication().getCryptState());
 		synchronized (this) {
@@ -138,10 +159,10 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		}
 		
 		// try to open the crypt
-		open("password");
+		unlockFpmDatabase("password");
 		
 		// give the db some time to try to open
-		Thread.sleep(2000L);
+		Thread.sleep(1000L);
 		
 		// check for valid data, and event broadcasts
 		assertTrue(getFpmApplication().isCryptOpen());
@@ -157,7 +178,7 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		
 
 		// close, and change state
-		close();
+		lockFpmDatabaseSync();
 		assertFalse(getFpmApplication().isCryptOpen());
 		assertEquals(FpmApplication.STATE_LOCKED, getFpmApplication().getCryptState());
 		synchronized (this) {
@@ -167,7 +188,7 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 		}
 		
 		// close, again, and make sure event is not reboardcast
-		close();
+		lockFpmDatabaseSync();
 		getInstrumentation().waitForIdleSync();
 		synchronized (this) {
 			assertEquals(1, eventFpmUnlock);
@@ -179,20 +200,20 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 	}
 	
 	public void testAutoLock() throws Throwable {
-		openBusyBlock("password");
+		unlockFpmDatabaseSync("password");
 		assertTrue(getFpmApplication().isCryptOpen());
-		setAutoLock(1);
+		setFpmDatabaseAutolock(1);
 		Thread.sleep(800);
 		assertTrue(getFpmApplication().isCryptOpen());
 		Thread.sleep(300);
 		assertFalse(getFpmApplication().isCryptOpen());
-		openBusyBlock("password");
+		unlockFpmDatabaseSync("password");
 		assertTrue(getFpmApplication().isCryptOpen());
 		Thread.sleep(1100);
 		assertFalse(getFpmApplication().isCryptOpen());
-		openBusyBlock("password");
+		unlockFpmDatabaseSync("password");
 		assertTrue(getFpmApplication().isCryptOpen());
-		setAutoLock(-1);
+		setFpmDatabaseAutolock(-1);
 		Thread.sleep(1100);
 		assertTrue(getFpmApplication().isCryptOpen());
 	}
