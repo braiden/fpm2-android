@@ -18,13 +18,28 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 	private int eventFpmError = 0;
 	private int eventFpmLock = 0;
 	private int eventFpmUnlock = 0;
-	
+		
 	public FpmApplicationTest() {
 		// test for App needs Instrumentation and UI thread
 		// so it extends AcvityTestCase, use AboutActity
 		// as the host activity - i have to use something that
 		// is defined in manifest.
 		super("org.braiden.fpm2", AboutActivity.class);
+	}
+	
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		// override where the fpm file is openned from for this unit test
+		getFpmApplication().setFpmFileLocator(new TestAssetsFpmFileLocator("plain.xml", getInstrumentation().getContext()));
+		getFpmApplication().closeCrypt();
+		getActivity();
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		getActivity().finish();
+		super.tearDown();
 	}
 
 	protected FpmApplication getFpmApplication() {
@@ -63,14 +78,6 @@ public class FpmApplicationTest extends ActivityInstrumentationTestCase2<AboutAc
 			}
 		});
 		getInstrumentation().waitForIdleSync();
-	}
-
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		// override where the fpm file is openned from for this unit test
-		getFpmApplication().setFpmFileLocator(new TestAssetsFpmFileLocator("plain.xml", getInstrumentation().getContext()));
-		getFpmApplication().closeCrypt();
 	}
 
 	public void testStates() throws Throwable {	
