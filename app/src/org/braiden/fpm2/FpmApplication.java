@@ -93,7 +93,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	private Timer autoLockTimer = null;
 	private SharedPreferences prefs;
 	private int failureMsg = 0;
-	private FpmFileLocator fileLocator = new ExternalStorageFpmFileLocator();
+	private FpmFileLocator fileLocator = new FileSystemFpmFileLocator();
 	// The ListView filter accesses fpm application from
 	// another thread where filtering occurs. None
 	// of the methods of this class are syncrhonized, we
@@ -354,7 +354,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 		InputStream open(String file) throws IOException;
 	}
 	
-	public static class ExternalStorageFpmFileLocator implements FpmFileLocator {
+	public static class FileSystemFpmFileLocator implements FpmFileLocator {
 		@Override
 		public InputStream open(String file) throws IOException {
 			return new FileInputStream(file);
