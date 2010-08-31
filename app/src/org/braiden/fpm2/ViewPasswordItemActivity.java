@@ -37,6 +37,8 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -95,6 +97,29 @@ public class ViewPasswordItemActivity extends ListActivity {
 		unregisterReceiver(receiver);
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.view_item_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+			case R.id.view_item_menu_launch:
+				PasswordItemListActivity.launchItem(this, id);
+				return true;
+			case R.id.view_item_menu_copy_user:
+				PasswordItemListActivity.copyItemProperty(this, id, FpmCrypt.PROPERTY_USER);
+				return true;
+			case R.id.view_item_menu_copy_password:
+				PasswordItemListActivity.copyItemProperty(this, id, FpmCrypt.PROPERTY_PASSWORD);
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
+	
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);

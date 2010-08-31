@@ -139,7 +139,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 			public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 				AdapterView.AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
 				PasswordItem item = getFpmApplication().getPasswordItemById(info.id);
-				getMenuInflater().inflate(R.menu.context_menu, menu);
+				getMenuInflater().inflate(R.menu.password_item_context_menu, menu);
 				if (item != null) {
 					menu.setHeaderTitle(item.getTitle());
 				}

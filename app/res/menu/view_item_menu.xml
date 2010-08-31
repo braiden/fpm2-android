@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+  
+  <item android:id="@+id/view_item_menu_launch"
+        android:title="@string/launch"
+        android:icon="@android:drawable/ic_menu_upload"/>
+  
+  <item android:id="@+id/view_item_menu_copy_user"
+        android:title="@string/copy_user"
+        android:icon="@android:drawable/ic_menu_edit" />
+  
+  <item android:id="@+id/view_item_menu_copy_password"
+  		android:title="@string/copy_password"
+  		android:icon="@android:drawable/ic_menu_edit" />
+  
+</menu>
