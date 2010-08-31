@@ -66,11 +66,6 @@ public class PasswordItemListActivityTest extends ActivityUnitTestCase<PasswordI
 		super.tearDown();
 	}
 
-	protected void setBooleanPref(final String pref, final boolean value) throws Throwable {		
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-		prefs.edit().putBoolean(pref, value).commit();
-	}
-	
 	public void testPreconditions() {
 		assertTrue(application.isCryptOpen());
 		assertNotNull(listView);
@@ -88,18 +83,24 @@ public class PasswordItemListActivityTest extends ActivityUnitTestCase<PasswordI
 	
 	@UiThreadTest
 	public void testListViewItemClicked() throws Throwable {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
 		Intent i = null;
 		
 		// default is view item
-		setBooleanPref(FpmApplication.PREF_LAUNCH_DEFAULT, false);
+		prefs.edit().putBoolean(FpmApplication.PREF_LAUNCH_DEFAULT, false).commit();
 		activity.onListItemClick(null, null, 1, 1);
 		i = getStartedActivityIntent();
 		assertEquals(ViewPasswordItemActivity.class.getName(), i.getComponent().getClassName());
 		assertEquals(1, i.getLongExtra(PasswordItemListActivity.EXTRA_ID, -1));
 		
+		activity.onListItemClick(null, null, 1, 23);
+		i = getStartedActivityIntent();
+		assertEquals(ViewPasswordItemActivity.class.getName(), i.getComponent().getClassName());
+		assertEquals(23, i.getLongExtra(PasswordItemListActivity.EXTRA_ID, -1));
+		
 		// default is web browser
-		setBooleanPref(FpmApplication.PREF_LAUNCH_DEFAULT, true);
-		setBooleanPref(FpmApplication.PREF_COPY_PASSWORD, false);
+		prefs.edit().putBoolean(FpmApplication.PREF_LAUNCH_DEFAULT, true).commit();
+		prefs.edit().putBoolean(FpmApplication.PREF_COPY_PASSWORD, false).commit();
 		clipboardManager.setText(null);
 		activity.onListItemClick(null, null, 1, 1);
 		i = getStartedActivityIntent();
@@ -108,8 +109,8 @@ public class PasswordItemListActivityTest extends ActivityUnitTestCase<PasswordI
 		assertFalse(clipboardManager.hasText());
 		
 		// default is web browser
-		setBooleanPref(FpmApplication.PREF_LAUNCH_DEFAULT, true);
-		setBooleanPref(FpmApplication.PREF_COPY_PASSWORD, true);
+		prefs.edit().putBoolean(FpmApplication.PREF_LAUNCH_DEFAULT, true).commit();
+		prefs.edit().putBoolean(FpmApplication.PREF_COPY_PASSWORD, true).commit();
 		clipboardManager.setText(null);
 		activity.onListItemClick(null, null, 1, 1);
 		assertEquals(application.decrypt(application.getPasswordItemById(1).getPassword()), clipboardManager.getText());
