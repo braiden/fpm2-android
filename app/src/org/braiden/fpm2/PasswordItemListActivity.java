@@ -106,6 +106,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
     	categoryPicker.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			@Override
 			public void onItemSelected(AdapterView<?> parentView, View selectedItem, int position, long id) {
+				Log.d(TAG, "categoryPicker#onItemSelected(position=" + position + ", id=" + id + ").");
 				CharSequence textFilter = getListView().getTextFilter();
 				FpmPasswordItemFilter filter = (FpmPasswordItemFilter) ((Filterable) getListAdapter()).getFilter();
 				String category = null;

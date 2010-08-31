@@ -5,7 +5,7 @@ import org.braiden.fpm2.FpmCrypt;
 
 public class MockFpmApplication extends FpmApplication {
 
-	volatile private boolean isOpen = false;
+	volatile private boolean isOpen = true;
 	
 	@Override
 	public void closeCrypt() {

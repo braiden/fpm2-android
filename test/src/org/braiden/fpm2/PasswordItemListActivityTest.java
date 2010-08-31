@@ -1,16 +1,19 @@
 package org.braiden.fpm2;
 
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+
+import org.braiden.fpm2.mock.MockFpmApplication;
 import org.braiden.fpm2.model.PasswordItem;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.app.Instrumentation.ActivityMonitor;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.preference.PreferenceManager;
-import android.test.ActivityInstrumentationTestCase2;
+import android.test.ActivityUnitTestCase;
+import android.test.UiThreadTest;
 import android.text.ClipboardManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -18,7 +21,7 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.Spinner;
 
-public class PasswordItemListActivityTest extends ActivityInstrumentationTestCase2<PasswordItemListActivity> {
+public class PasswordItemListActivityTest extends ActivityUnitTestCase<PasswordItemListActivity> {
 	
 	protected static final String TAG = "PasswordItemListActivityTest";
 	// how long to wait for async filter thread to finish before
@@ -34,34 +37,31 @@ public class PasswordItemListActivityTest extends ActivityInstrumentationTestCas
 	private ClipboardManager clipboardManager;
 	
 	public PasswordItemListActivityTest() {
-		super("org.braiden.fpm2", PasswordItemListActivity.class);
+		super(PasswordItemListActivity.class);
 	}
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		instrumentation = getInstrumentation();
-		activity = getActivity();
+		application = (FpmApplication) Instrumentation.newApplication(MockFpmApplication.class, instrumentation.getContext());		
+		setApplication(application);
 		
-		activity.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				application = (FpmApplication) activity.getApplication();
-				listView = activity.getListView();
-				listData = (BaseAdapter) listView.getAdapter();
-				categoryPicker = (Spinner) activity.findViewById(R.id.category_picker);
-				clipboardManager = (ClipboardManager) activity.getSystemService(Activity.CLIPBOARD_SERVICE);
-				
-				// disable locking of FPM database, and unlock
-				application.setFpmFileLocator(new FpmApplicationTest.TestAssetsFpmFileLocator("plain.xml", getInstrumentation().getContext()));
-				SharedPreferences defaultPrefs = PreferenceManager.getDefaultSharedPreferences(activity);
-				defaultPrefs.edit().putString(FpmApplication.PREF_AUTOLOCK, "-1").commit();
-				application.openCrypt("password");
-			}
-		});
-		instrumentation.waitForIdleSync();
-		while (application.getCryptState() == FpmApplication.STATE_BUSY) {
-			Thread.sleep(100L);
+		try {
+			runTestOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					instrumentation.callApplicationOnCreate(application);
+					activity = startActivity(new Intent(), null, null);
+					listView = activity.getListView();
+					listData = (BaseAdapter) listView.getAdapter();
+					categoryPicker = (Spinner) activity.findViewById(R.id.category_picker);
+					clipboardManager = (ClipboardManager) activity.getSystemService(Activity.CLIPBOARD_SERVICE);
+				}
+			});
+		} catch (Throwable e) {
+			Log.e(TAG, "Failed while running in UI thread.");
+			fail(e.toString());
 		}
 		instrumentation.waitForIdleSync();
 	}
@@ -72,33 +72,9 @@ public class PasswordItemListActivityTest extends ActivityInstrumentationTestCas
 		super.tearDown();
 	}
 
-	protected void setBooleanPref(final String pref, final boolean value) {
-		activity.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {				
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-				prefs.edit().putBoolean(pref, value).commit();
-			}
-		});
-	}
-	
-	protected void fireOnClick(final int idx) {
-		activity.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				activity.onListItemClick(null, null, idx, idx);
-			}
-		});
-	}
-	
-	private void copyToClipboard(final long itemId, final String property) {
-		activity.runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				PasswordItemListActivity.copyItemProperty(activity, itemId, property);
-			}
-		});
-		instrumentation.waitForIdleSync();
+	protected void setBooleanPref(final String pref, final boolean value) throws Throwable {		
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+		prefs.edit().putBoolean(pref, value).commit();
 	}
 	
 	public void testPreconditions() {
@@ -108,77 +84,89 @@ public class PasswordItemListActivityTest extends ActivityInstrumentationTestCas
 		assertNotNull(categoryPicker);
 	}
 	
-	public void testCopyToClipboard() {	
-		copyToClipboard(0, FpmCrypt.PROPERTY_USER);
+	@UiThreadTest
+	public void testCopyToClipboard() throws Throwable{	
+		PasswordItemListActivity.copyItemProperty(activity, 0, FpmCrypt.PROPERTY_USER);
 		assertEquals("sample@gmail.com", clipboardManager.getText());
-		copyToClipboard(2, FpmCrypt.PROPERTY_PASSWORD);
+		PasswordItemListActivity.copyItemProperty(activity, 2, FpmCrypt.PROPERTY_PASSWORD);
 		assertEquals("chewy", clipboardManager.getText());
 	}
 	
-	public void testListViewItemClicked() throws Exception {
-		// add a monitor for blocking / watching request to launch browser
-		IntentFilter webFilter = new IntentFilter(Intent.ACTION_VIEW);
-		webFilter.addDataScheme("http");
-		webFilter.addDataScheme("https");
-		ActivityMonitor webMonitor = new ActivityMonitor(webFilter, null, true);
-		instrumentation.addMonitor(webMonitor);
-		// add monitor for view item
-		ActivityMonitor viewItemMonitor = new ActivityMonitor("org.braiden.fpm2.ViewPasswordItemActivity", null, true);
-		instrumentation.addMonitor(viewItemMonitor);
+	@UiThreadTest
+	public void testListViewItemClicked() throws Throwable {
+		Intent i = null;
 		
 		// default is view item
 		setBooleanPref(FpmApplication.PREF_LAUNCH_DEFAULT, false);
-		fireOnClick(1);
-		viewItemMonitor.waitForActivityWithTimeout(1000);
-		assertEquals(1, viewItemMonitor.getHits());
+		activity.onListItemClick(null, null, 1, 1);
+		i = getStartedActivityIntent();
+		assertEquals(ViewPasswordItemActivity.class.getName(), i.getComponent().getClassName());
+		assertEquals(1, i.getLongExtra(PasswordItemListActivity.EXTRA_ID, -1));
 		
 		// default is web browser
 		setBooleanPref(FpmApplication.PREF_LAUNCH_DEFAULT, true);
 		setBooleanPref(FpmApplication.PREF_COPY_PASSWORD, false);
 		clipboardManager.setText(null);
-		fireOnClick(1);
-		webMonitor.waitForActivityWithTimeout(1000);
-		assertEquals(1, webMonitor.getHits());
+		activity.onListItemClick(null, null, 1, 1);
+		i = getStartedActivityIntent();
+		assertEquals(Intent.ACTION_VIEW, i.getAction());
+		assertNotNull(i.getScheme());
 		assertFalse(clipboardManager.hasText());
 		
 		// default is web browser
 		setBooleanPref(FpmApplication.PREF_LAUNCH_DEFAULT, true);
 		setBooleanPref(FpmApplication.PREF_COPY_PASSWORD, true);
 		clipboardManager.setText(null);
-		fireOnClick(1);
-		webMonitor.waitForActivityWithTimeout(1000);
-		assertEquals(2, webMonitor.getHits());
+		activity.onListItemClick(null, null, 1, 1);
 		assertEquals(application.decrypt(application.getPasswordItemById(1).getPassword()), clipboardManager.getText());
 	}
 	
-	public void testCategoryFilter() throws Exception {
-		listData.registerDataSetObserver(new DataSetObserver() {
+	public void testListViewFilter() throws Throwable {
+		final CyclicBarrier barrier = new CyclicBarrier(2);
+		
+		runTestOnUiThread(new Runnable() {
 			@Override
-			public void onChanged() {
-				String category = (String) categoryPicker.getSelectedItem();
-				CharSequence textFilter = listView.getTextFilter();
-				Log.d(TAG, "DataSetObserver#onChanged() category = \"" + category + "\" textFilter=\"" + textFilter + "\".");
-				for (int idx = 0; idx < listData.getCount(); idx++) {
-					PasswordItem item = (PasswordItem) listData.getItem(idx);
-					if (activity.getString(R.string.default_category).equals(category)) {
-						assertTrue(item.isDefault());
-					} else if (activity.getString(R.string.all_category).equals(category)) {
-						assertTrue(!TextUtils.isEmpty(textFilter) || listData.getCount() == 3);
-					} else {
-						assertTrue(listData.getCount() > 0);
-						assertEquals(category, item.getCategory());
+			public void run() {
+				listData.registerDataSetObserver(new DataSetObserver() {
+					@Override
+					public void onChanged() {
+						try {
+							String category = (String) categoryPicker.getSelectedItem();
+							CharSequence textFilter = listView.getTextFilter();
+							Log.d(TAG, "DataSetObserver#onChanged() category = \"" + category + "\" textFilter=\"" + textFilter + "\".");
+							for (int idx = 0; idx < listData.getCount(); idx++) {
+								PasswordItem item = (PasswordItem) listData.getItem(idx);
+								if (activity.getString(R.string.default_category).equals(category)) {
+									assertTrue(item.isDefault());
+								} else if (activity.getString(R.string.all_category).equals(category)) {
+									assertTrue(!TextUtils.isEmpty(textFilter) || listData.getCount() == 3);
+								} else {
+									assertTrue(listData.getCount() > 0);
+									assertEquals(category, item.getCategory());
+								}
+								if (textFilter != null) {
+									assertTrue(item.getTitle().toUpperCase().contains(textFilter.toString().toUpperCase()));
+								}
+							}
+						} finally {
+							try {
+								Log.d(TAG, Thread.currentThread() + " is waiting for barier.");
+								barrier.await();
+							} catch (Exception e) {
+								Log.e(TAG, "Barrier synchronization failed.", e);
+							}
+						}
 					}
-					if (textFilter != null) {
-						assertTrue(item.getTitle().toUpperCase().contains(textFilter.toString().toUpperCase()));
-					}
-				}
+				});
 			}
 		});
+		instrumentation.waitForIdleSync();
 		
-		for (String textFilter : new String[] {null, "a", "amaZON", "SDFSDFSDF", null}) {
+		
+		for (String textFilter : new String[] {"a", null, "amaZON", "SDFSDFSDF", null}) {
 			
 			final String textFilterFinal = textFilter;
-			activity.runOnUiThread(new Runnable() {
+			runTestOnUiThread(new Runnable() {
 				@Override
 				public void run() {
 					if (textFilterFinal == null) {
@@ -188,18 +176,9 @@ public class PasswordItemListActivityTest extends ActivityInstrumentationTestCas
 					}
 				}
 			});
-			Thread.sleep(FILTER_WAIT_MILLISECONDS);
-			
-			for (int idx = 0; idx < categoryPicker.getAdapter().getCount(); idx++) {
-				final int finalIdx = idx;
-				activity.runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						categoryPicker.setSelection(finalIdx);
-					}
-				});
-				Thread.sleep(FILTER_WAIT_MILLISECONDS);
-			}
+			Log.d(TAG, Thread.currentThread() + " is waiting for barier.");
+			barrier.await(2, TimeUnit.SECONDS);
+			barrier.reset();
 		}
 	}
 	
