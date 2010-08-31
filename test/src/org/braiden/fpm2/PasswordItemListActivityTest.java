@@ -1,21 +1,15 @@
 package org.braiden.fpm2;
 
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.TimeUnit;
-
 import org.braiden.fpm2.mock.MockFpmApplication;
-import org.braiden.fpm2.model.PasswordItem;
 
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.DataSetObserver;
 import android.preference.PreferenceManager;
 import android.test.ActivityUnitTestCase;
 import android.test.UiThreadTest;
 import android.text.ClipboardManager;
-import android.text.TextUtils;
 import android.util.Log;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
@@ -119,67 +113,6 @@ public class PasswordItemListActivityTest extends ActivityUnitTestCase<PasswordI
 		clipboardManager.setText(null);
 		activity.onListItemClick(null, null, 1, 1);
 		assertEquals(application.decrypt(application.getPasswordItemById(1).getPassword()), clipboardManager.getText());
-	}
-	
-	public void testListViewFilter() throws Throwable {
-		final CyclicBarrier barrier = new CyclicBarrier(2);
-		
-		runTestOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				listData.registerDataSetObserver(new DataSetObserver() {
-					@Override
-					public void onChanged() {
-						try {
-							String category = (String) categoryPicker.getSelectedItem();
-							CharSequence textFilter = listView.getTextFilter();
-							Log.d(TAG, "DataSetObserver#onChanged() category = \"" + category + "\" textFilter=\"" + textFilter + "\".");
-							for (int idx = 0; idx < listData.getCount(); idx++) {
-								PasswordItem item = (PasswordItem) listData.getItem(idx);
-								if (activity.getString(R.string.default_category).equals(category)) {
-									assertTrue(item.isDefault());
-								} else if (activity.getString(R.string.all_category).equals(category)) {
-									assertTrue(!TextUtils.isEmpty(textFilter) || listData.getCount() == 3);
-								} else {
-									assertTrue(listData.getCount() > 0);
-									assertEquals(category, item.getCategory());
-								}
-								if (textFilter != null) {
-									assertTrue(item.getTitle().toUpperCase().contains(textFilter.toString().toUpperCase()));
-								}
-							}
-						} finally {
-							try {
-								Log.d(TAG, Thread.currentThread() + " is waiting for barier.");
-								barrier.await();
-							} catch (Exception e) {
-								Log.e(TAG, "Barrier synchronization failed.", e);
-							}
-						}
-					}
-				});
-			}
-		});
-		instrumentation.waitForIdleSync();
-		
-		
-		for (String textFilter : new String[] {"a", null, "amaZON", "SDFSDFSDF", null}) {
-			
-			final String textFilterFinal = textFilter;
-			runTestOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					if (textFilterFinal == null) {
-						listView.clearTextFilter();
-					} else {
-						listView.setFilterText(textFilterFinal);
-					}
-				}
-			});
-			Log.d(TAG, Thread.currentThread() + " is waiting for barier.");
-			barrier.await(2, TimeUnit.SECONDS);
-			barrier.reset();
-		}
 	}
 	
 }

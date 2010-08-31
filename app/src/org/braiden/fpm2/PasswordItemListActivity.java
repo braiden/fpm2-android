@@ -84,7 +84,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
     	setContentView(R.layout.password_item_list);
     	
     	// register the adapter for building view for each element of our list
-    	BaseAdapter adapter = new FpmCryptListAdapter(this, getListView());
+    	BaseAdapter adapter = new FpmCryptListAdapter(getFpmApplication(), getListView());
     	setListAdapter(adapter);
     	getListView().setTextFilterEnabled(true);
     	
@@ -357,10 +357,10 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
     	private Filter filter = null;
     	private ListView listView;
     	
-    	public FpmCryptListAdapter(Activity activity, ListView listView) {
-    		layoutInflater = LayoutInflater.from(activity);
+    	public FpmCryptListAdapter(FpmApplication app, ListView listView) {
+    		this.layoutInflater = LayoutInflater.from(app);
     		this.listView = listView;
-    		app = (FpmApplication) activity.getApplication();
+    		this.app = app;
     		if (app.isCryptOpen()) {
     			data = app.getPasswordItems();
     		}
