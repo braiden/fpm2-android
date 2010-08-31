@@ -88,8 +88,9 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	
 	protected static final String TAG = "FpmApplication";
 	
+	protected FpmCrypt fpmCrypt = new FpmCrypt();
+	
 	private Handler handler;
-	private FpmCrypt fpmCrypt = new FpmCrypt();
 	private Timer autoLockTimer = null;
 	private SharedPreferences prefs;
 	private int failureMsg = 0;
