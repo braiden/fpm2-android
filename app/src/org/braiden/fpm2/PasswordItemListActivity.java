@@ -108,7 +108,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 			public void onItemSelected(AdapterView<?> parentView, View selectedItem, int position, long id) {
 				Log.d(TAG, "categoryPicker#onItemSelected(position=" + position + ", id=" + id + ").");
 				CharSequence textFilter = getListView().getTextFilter();
-				FpmPasswordItemFilter filter = (FpmPasswordItemFilter) ((Filterable) getListAdapter()).getFilter();
+				PasswordItemFilter filter = (PasswordItemFilter) ((Filterable) getListAdapter()).getFilter();
 				String category = null;
 				if (position == 1) {
 					category = CATEGORY_DEFAULT;
@@ -124,7 +124,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 			@Override
 			public void onNothingSelected(AdapterView<?> parentView) {
 				CharSequence textFilter = getListView().getTextFilter();
-				FpmPasswordItemFilter filter = (FpmPasswordItemFilter) ((Filterable) getListAdapter()).getFilter();
+				PasswordItemFilter filter = (PasswordItemFilter) ((Filterable) getListAdapter()).getFilter();
 				filter.setCategory(null);
 				if (getFpmApplication().isCryptOpen()) {
 					filter.filter(textFilter);
@@ -380,7 +380,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 
 		@Override
 		public Filter getFilter() {
-			return filter != null ? filter : (filter = new FpmPasswordItemFilter(app, this));
+			return filter != null ? filter : (filter = new PasswordItemFilter(app, this));
 		}
 
 		@Override
@@ -439,38 +439,41 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 		
 	}
 	
-	public static class FpmPasswordItemFilter extends Filter {
+	public static class PasswordItemFilter extends Filter {
 				
 		private FpmApplication fpmApp;
 		private FpmCryptListAdapter fpmListAdapter;
 		volatile private String category = null;
 		
-		public FpmPasswordItemFilter(FpmApplication fpmApp, FpmCryptListAdapter fpmListAdapter) {
+		public PasswordItemFilter(FpmApplication fpmApp, FpmCryptListAdapter fpmListAdapter) {
 			this.fpmApp = fpmApp;
 			this.fpmListAdapter = fpmListAdapter;
 		}
 		
-		@Override
-		protected FilterResults performFiltering(CharSequence constraintSeq) {
-			String constraint = constraintSeq == null ? StringUtils.EMPTY : constraintSeq.toString().trim().toUpperCase();
+		protected List<PasswordItem> filterPasswordItems(String category, String title) {
+			title = title == null ? StringUtils.EMPTY : title.trim().toUpperCase();
 			List<PasswordItem> allItems = getPasswordItems();
-			FilterResults result = new FilterResults();
 			
-			android.util.Log.d(TAG, "performFiltering(string=" + constraintSeq + ", category=" + category + ")");
+			android.util.Log.d(TAG, "performFiltering(string=" + title + ", category=" + category + ")");
 			
-			if ((constraint == null || StringUtils.isBlank(constraint)) && category == null) {
-				result.values = allItems;
+			if ((title == null || StringUtils.isBlank(title)) && category == null) {
+				return allItems;
 			} else {
 				List<PasswordItem> filteredItems = new ArrayList<PasswordItem>(allItems.size());
 				for (PasswordItem item : allItems) {
-					if (item.getTitle().toUpperCase().contains(constraint)
-							&& acceptCategory(item)) {
+					if (item.getTitle().toUpperCase().contains(title)
+							&& acceptCategory(item, category)) {
 						filteredItems.add(item);
 					}
 				}
-				result.values = filteredItems;
+				return filteredItems;
 			}
-			
+		}
+		
+		@Override
+		protected FilterResults performFiltering(CharSequence constraintSeq) {
+			FilterResults result = new FilterResults();
+			result.values = filterPasswordItems(category, constraintSeq == null ? StringUtils.EMPTY : constraintSeq.toString());
 			return result;
 		}
 
@@ -504,7 +507,7 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 			return result;
 		}
 
-		private boolean acceptCategory(PasswordItem item) {
+		private boolean acceptCategory(PasswordItem item, String category) {
 			return category == null 
 					|| (CATEGORY_DEFAULT.equals(category) && item.isDefault())
 					|| (category.equals(item.getCategory()));
