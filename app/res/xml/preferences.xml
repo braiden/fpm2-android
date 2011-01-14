@@ -25,7 +25,9 @@
                 android:entryValues="@array/pref_autolock_values"
                 android:dialogTitle="@string/pref_autolock_after"
                 android:defaultValue="60" />
-		
-    </PreferenceCategory>
+    	
+    
+</PreferenceCategory><PreferenceCategory android:title="@string/fpm_file"><Preference android:key="fpm_import_now" android:summary="@string/pref_impoty_summary" android:title="@string/pref_import"></Preference>
+</PreferenceCategory>
 
 </PreferenceScreen>
