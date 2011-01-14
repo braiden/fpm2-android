@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
+	<classpathentry kind="src" path="ext"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry kind="lib" path="lib/commons-lang-2.5.jar" sourcepath="lib/commons-lang-2.5-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
