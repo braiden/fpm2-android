@@ -32,7 +32,9 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -155,12 +157,24 @@ public class UnlockCryptActivity extends Activity implements FpmBroadcastReceive
 	@Override
 	public void onFpmLock() {
 		if (getFpmApplication().getCryptState() != FpmApplication.STATE_BUSY) {
-			createPassphraseDialog().show();
+			if (!handleMissingFpmFile()) {
+				createPassphraseDialog().show();
+			}
 		} else {
 			createProgressDialog().show();
 		}		
 	}
 	
+	private boolean handleMissingFpmFile() {
+		boolean fpmFileOk = getFpmApplication().fpmFileExists();
+
+		if (!fpmFileOk) {
+			createFileMissingDialog().show();
+		}
+		
+		return !fpmFileOk;
+	}
+
 	private void dismissDialogs() {
 		// once the password crypt is unlocked dismiss
 		// any dialogs the might exist.
@@ -195,6 +209,43 @@ public class UnlockCryptActivity extends Activity implements FpmBroadcastReceive
 		finish();
 	}
 
+	protected Dialog createFirstRunDialog() {
+		return null; // TODO
+	}
+	
+	protected Dialog createFileMissingDialog() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String externalPath = prefs.getString(FpmApplication.PREF_SD_LOCATION, null);
+		String message = String.format(getResources().getString(R.string.exception_file_not_found_extra), externalPath);
+		
+		AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this)
+			.setTitle(R.string.exception_file_not_found)
+			.setIcon(android.R.drawable.ic_dialog_alert)
+			.setMessage(message)
+			.setNegativeButton(R.string.preferences, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+					startActivity(new Intent(UnlockCryptActivity.this, FpmPreferencesActivity.class));
+				}
+			})
+			.setOnCancelListener(new DialogInterface.OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					dialog.dismiss();
+					onFpmPassphraseCancel();
+				}
+			})
+			.setPositiveButton(R.string.passphrase_dialog_cancel, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.dismiss();
+					onFpmPassphraseCancel();
+				}				
+			});
+		return dialogBuilder.create();
+	}
+	
 	/**
 	 * Create progress dialog for "Checking Passphrase..."
 	 * @return

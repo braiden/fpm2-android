@@ -26,10 +26,14 @@ package org.braiden.fpm2;
  *
  */
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +44,7 @@ import java.util.TimerTask;
 import org.braiden.fpm2.FpmCrypt.FpmCipherUnsupportedException;
 import org.braiden.fpm2.FpmCrypt.FpmPassphraseInvalidException;
 import org.braiden.fpm2.model.PasswordItem;
+import org.braiden.fpm2.util.IOUtils;
 import org.xml.sax.SAXException;
 
 import android.app.Application;
@@ -47,9 +52,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * FpmApplication provides all Actitities and Services with access 
@@ -86,7 +93,8 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	public static final String EXTRA_MSG = "org.braiden.fpm2.EXTRA_MESSAGE";
 	
 	// default location if the FPM databased (XML) file
-	public static final String FPM_FILE = "/sdcard/fpm";
+	public static final String DEFAULT_FPM_FILE = "fpm"; 
+	public static final String PRIVATE_FPM_FILE = "fpm.xml";
 	
 	protected static final String TAG = "FpmApplication";
 	
@@ -96,7 +104,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	private Timer autoLockTimer = null;
 	private SharedPreferences prefs;
 	private int failureMsg = 0;
-	private FpmFileLocator fileLocator = new FileSystemFpmFileLocator();
+	private FpmFileLocator fileLocator = new DefaultFpmFileLocator();
 	// The ListView filter accesses fpm application from
 	// another thread where filtering occurs. None
 	// of the methods of this class are syncrhonized, we
@@ -127,6 +135,17 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 		if (PREF_AUTOLOCK.equals(key)) {
 			scheduleAutoLock();
 		}
+	}
+
+	public boolean fpmFileExists()
+	{
+		boolean fileFound = true;
+		try {
+			fileLocator.open(getExternalStorageFpmFilePath());
+		} catch (IOException e) {
+			fileFound = false;
+		}
+		return fileFound;
 	}
 	
 	/**
@@ -166,9 +185,11 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 			@Override
 			protected Integer doInBackground(String... params) {
 				int result = 0;
+				String passphrase = params[0];
+				String fpmFile = params[1];
 				
 				try {
-					fpmCrypt.open(fileLocator.open(FPM_FILE), params[0]);
+					fpmCrypt.open(fileLocator.open(fpmFile), passphrase);
 				} catch (FileNotFoundException e) {
 					result = R.string.exception_file_not_found;
 					Log.w(TAG, "Failed to open FPM database.", e);
@@ -203,7 +224,7 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 		};
 		
 		state = STATE_BUSY;
-		task.execute(passphrase);
+		task.execute(passphrase, getExternalStorageFpmFilePath());
 	}
 	
 	/**
@@ -352,15 +373,53 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 		}
 		return result;
 	}
+	
+	private String getExternalStorageFpmFilePath() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		String path = prefs.getString(PREF_SD_LOCATION, null);
+		if (path == null) {
+			path = new File(Environment.getExternalStorageDirectory(), DEFAULT_FPM_FILE).getAbsolutePath();
+			prefs.edit().putString(PREF_SD_LOCATION, path).commit();
+		}
+		return path;
+	}
 
+	private boolean isInternalStorageEnabled() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		return prefs.getBoolean(PREF_USE_INTERNAL_STORAGE, true);
+	}
+	
 	public static interface FpmFileLocator {
 		InputStream open(String file) throws IOException;
 	}
 	
-	public static class FileSystemFpmFileLocator implements FpmFileLocator {
+	public class DefaultFpmFileLocator implements FpmFileLocator {
 		@Override
 		public InputStream open(String file) throws IOException {
-			return new FileInputStream(file);
+			File externalFpmFile = new File(file);
+			boolean internalStorage = FpmApplication.this.isInternalStorageEnabled();
+			
+			if (internalStorage && externalFpmFile.exists())
+			{
+				// internal storage option is enabled and file
+				// also exists on external storage. move the file
+				// into internal storgage and delete
+				InputStream is = new BufferedInputStream(new FileInputStream(file));
+				OutputStream os = new BufferedOutputStream(
+						FpmApplication.this.openFileOutput(PRIVATE_FPM_FILE, Application.MODE_PRIVATE));
+				IOUtils.write(os, is);
+				is.close(); os.close();
+				externalFpmFile.delete();
+			}
+			
+			if (internalStorage || !externalFpmFile.exists())
+			{
+				return FpmApplication.this.openFileInput(PRIVATE_FPM_FILE);
+			}
+			else
+			{			
+				return new BufferedInputStream(new FileInputStream(file));
+			}
 		}
 	}
 	

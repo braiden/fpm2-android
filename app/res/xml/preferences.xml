@@ -22,13 +22,13 @@
 	<PreferenceCategory android:title="@string/fpm_file">
 
 		<EditTextPreference android:key="fpm_sd_location" 
-			android:defaultValue="/sdcard/fpm"
 			android:summary="@string/pref_fpm_sd_location_summary"
 			android:title="@string/pref_fpm_sd_location" />
 
 		<CheckBoxPreference android:key="fpm_internal_storage"
 			android:title="@string/pref_internal_storage" 
-			android:summary="@string/pref_internal_storage_summary" />
+			android:summary="@string/pref_internal_storage_summary" 
+			android:defaultValue="true" />
 
 	</PreferenceCategory>
 

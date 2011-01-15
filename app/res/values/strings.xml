@@ -39,7 +39,7 @@
     <string name="pref_default_action_launch">Launch as default</string>
     <string name="pref_default_action_launch_summary">Launch, instead of view, when an item is selected.</string>
 	<string name="pref_fpm_sd_location">Location of FPM2 Data</string>
-	<string name="pref_fpm_sd_location_summary">Location on your phone where you\'ve copied the FPM2 data ("~/.fpm/fpm")</string>
+	<string name="pref_fpm_sd_location_summary">Location on your phone to watch for the FPM file.</string>
 	<string name="pref_internal_storage">Use Internal Storage</string>
 	<string name="pref_internal_storage_summary">Recommended to prevents other applications from accessing data.</string>
 
@@ -50,7 +50,7 @@
     <string name="exception_fpm_unsupported">FPM Version unsupported.</string>
     <string name="exception_fpm_passphrase">Invalid passphrase.</string>
 
-	<string name="exception_file_not_found_extra">Make sure that you\'ve copied ~/.fpm/fpm file from your PC to the root of your SD card.</string>
+	<string name="exception_file_not_found_extra">Make sure that you\'ve copied ~/.fpm/fpm file from your PC to \"%1$s\".</string>
     <string name="exception_jce_extra">A required java cryptography extension (JCE) provider could not be found. Maybe unsupported version of android OS?</string>
     <string name="exception_fpm_unsupported_extra">Your FPM file uses a cipher not currently supported. Only AES-256 is supported.</string>
     
@@ -58,6 +58,8 @@
     <string name="all_category">&lt;&lt; ALL &gt;&gt;</string>
     <string name="default_category">&lt;&lt; DEFAULT &gt;&gt;</string>
     <string name="category_prompt">Category</string>
+    
+    <string name="fpm_updated">Imported updates from external storage.</string>
     
     <string name="search_hint">Search FPM2</string>
     
