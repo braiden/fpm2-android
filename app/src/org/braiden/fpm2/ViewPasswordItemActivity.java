@@ -34,6 +34,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.opengl.Visibility;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -54,14 +55,21 @@ import android.widget.TextView;
 
 public class ViewPasswordItemActivity extends ListActivity {
 
+	private static final String KEY_IS_PASSWORD_DISPLAYED = "isPasswordDisplayed";
+
 	protected final static String TAG = "ViewPasswordItemActivity";
 	
 	private long id;
 	private BroadcastReceiver receiver;
+	private boolean isPasswordDisplayed = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		if (savedInstanceState != null) {
+			isPasswordDisplayed = savedInstanceState.getBoolean(KEY_IS_PASSWORD_DISPLAYED);
+		}
 		
 		// get the element id being displayed
 		FpmApplication app = (FpmApplication) this.getApplication();
@@ -102,6 +110,13 @@ public class ViewPasswordItemActivity extends ListActivity {
 		getMenuInflater().inflate(R.menu.view_item_menu, menu);
 		return true;
 	}
+	
+	
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		outState.putBoolean(KEY_IS_PASSWORD_DISPLAYED, isPasswordDisplayed);
+	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
@@ -132,6 +147,7 @@ public class ViewPasswordItemActivity extends ListActivity {
 				if (password != null) {
 					TextView text = (TextView) v.findViewById(R.id.passwordItemPropertyRowValue);
 					text.setText(password);
+					isPasswordDisplayed = true;
 				}
 			}
 		} else if (PasswordItemPropertyListAdapter.TITLES[position] == R.string.password_item_url) {
@@ -163,11 +179,13 @@ public class ViewPasswordItemActivity extends ListActivity {
 			"launcher",
 		};
 		
+		private ViewPasswordItemActivity activity;
 		private LayoutInflater layoutInflater;
 		private PasswordItem passwordItem;
 		
-		public PasswordItemPropertyListAdapter(Context context, PasswordItem passwordItem) {
-			this.layoutInflater = LayoutInflater.from(context);
+		public PasswordItemPropertyListAdapter(ViewPasswordItemActivity activity, PasswordItem passwordItem) {
+			this.activity = activity;
+			this.layoutInflater = LayoutInflater.from(activity);
 			this.passwordItem = passwordItem;
 		}
 
@@ -211,6 +229,15 @@ public class ViewPasswordItemActivity extends ListActivity {
 				if (TITLES[position] != R.string.password_item_password) {
 					// display the valid
 					viewHolder.value.setText("" + PropertyUtils.getProperty(passwordItem, PROPERTIES[position]));
+					// notes are multiple lines
+					if (TITLES[position] == R.string.password_item_notes) {
+						viewHolder.value.setSingleLine(false);
+					}
+				} else if (activity.isPasswordDisplayed) {
+					// the password is being displayed. decrypt and show
+					FpmApplication app = ((FpmApplication) activity.getApplication());
+					String cypherText = (String) PropertyUtils.getProperty(passwordItem, PROPERTIES[position]);
+					viewHolder.value.setText(app.decrypt(cypherText));
 				} else {
 					// .getPassword returns the FPM encrypted string. display **** instead.
 					viewHolder.value.setText("********");

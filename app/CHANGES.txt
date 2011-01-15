@@ -4,5 +4,10 @@
 	- bump version # in manifest
 	- removed "10 seconds" option under auto-lock
 	- stripped out most of commons-lang to reduce download size
-	- fpm data file is "imported" and stored on internal memory
-	  where other applications are unable to access the file.
+	- fpm data file can be "imported" and stored on internal memory
+	  where other applications are unable to access the file
+	- password does not turn back to *** when screen orientation changes
+	- add android.permission.WRITE_EXTERNAL_STORAGE to manifest,
+	  required to remove fpm file from sd card, after imported to memory
+	- notes are displayed as multiple lines
+	- http:// is assumed when launching URLs that provide no schema

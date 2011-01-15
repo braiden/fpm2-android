@@ -38,10 +38,11 @@
     <string name="pref_copy_password_on_launch_summary">If selected, the password will be copied to clipboard when an item is launched.</string>
     <string name="pref_default_action_launch">Launch as default</string>
     <string name="pref_default_action_launch_summary">Launch, instead of view, when an item is selected.</string>
-    <string name="pref_import">Update FPM Data Now</string>
-    <string name="pref_impoty_summary">Update your password entries. Move FPM2 data from SD card to application.</string>
-    
-    
+	<string name="pref_fpm_sd_location">Location of FPM2 Data</string>
+	<string name="pref_fpm_sd_location_summary">Location on your phone where you\'ve copied the FPM2 data ("~/.fpm/fpm")</string>
+	<string name="pref_internal_storage">Use Internal Storage</string>
+	<string name="pref_internal_storage_summary">Recommended to prevents other applications from accessing data.</string>
+
     <string name="exception_file_not_found">FPM file not found.</string>
     <string name="exception_io">I/O Error reading file.</string>
     <string name="exception_sax">XML parsing error.</string>

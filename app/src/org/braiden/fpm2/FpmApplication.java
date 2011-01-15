@@ -80,6 +80,8 @@ public class FpmApplication extends Application implements OnSharedPreferenceCha
 	public static final String PREF_AUTOLOCK = "fpm_autolock";
 	public static final String PREF_COPY_PASSWORD = "fpm_copy_password_on_launch";
 	public static final String PREF_LAUNCH_DEFAULT = "fpm_default_action_launch";
+	public static final String PREF_SD_LOCATION = "fpm_sd_location";
+	public static final String PREF_USE_INTERNAL_STORAGE = "fpm_internal_storage";
 	
 	public static final String EXTRA_MSG = "org.braiden.fpm2.EXTRA_MESSAGE";
 	

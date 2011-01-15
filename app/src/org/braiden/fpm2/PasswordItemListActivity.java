@@ -68,6 +68,8 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
  */
 public class PasswordItemListActivity extends ListActivity implements FpmBroadcastReceiver.Listener {
 	
+	private static final String LAUNCHER_WEB = "Web";
+
 	public final static String EXTRA_ID = "id";
 	
 	protected final static String TAG = "PasswordListActivity";
@@ -324,7 +326,15 @@ public class PasswordItemListActivity extends ListActivity implements FpmBroadca
 				if (copyPassword) {
 					copyItemProperty(activity, id, FpmCrypt.PROPERTY_PASSWORD);
 				}
-				Uri uri = Uri.parse(item.getUrl());
+				
+				String uriString = item.getUrl();
+				
+				if (LAUNCHER_WEB.equalsIgnoreCase(item.getLauncher()) && uriString.indexOf("://") < 0)
+				{
+					uriString = "http://" + uriString;
+				}
+				
+				Uri uri = Uri.parse(uriString);
 				Intent intent = new Intent(Intent.ACTION_VIEW, uri);
 				activity.startActivity(intent);
 			} catch (Exception e) {

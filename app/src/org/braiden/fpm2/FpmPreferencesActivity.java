@@ -26,7 +26,6 @@ package org.braiden.fpm2;
  *
  */
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 
@@ -36,8 +35,6 @@ public class FpmPreferencesActivity extends PreferenceActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
-		findPreference("fpm_import_now").setIntent(
-				new Intent(this,ImportFpmFileActivity.class));
 	}
 	
 }

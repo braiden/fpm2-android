@@ -1,33 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
-        xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory
-            android:title="@string/general">
-       		
-		<CheckBoxPreference
-				android:key="fpm_copy_password_on_launch"
-                android:title="@string/pref_copy_password_on_launch"
-                android:summary="@string/pref_copy_password_on_launch_summary"
-                android:defaultValue="false" />
-         		
-		<CheckBoxPreference
-				android:key="fpm_default_action_launch"
-                android:title="@string/pref_default_action_launch"
-                android:summary="@string/pref_default_action_launch_summary"
-                android:defaultValue="false" />
-                                   
-        <ListPreference
-                android:key="fpm_autolock"                
-                android:title="@string/pref_autolock"
-                android:summary="@string/pref_autolock_summary"
-                android:entries="@array/pref_autolock_entries"
-                android:entryValues="@array/pref_autolock_values"
-                android:dialogTitle="@string/pref_autolock_after"
-                android:defaultValue="60" />
-    	
-    
-</PreferenceCategory><PreferenceCategory android:title="@string/fpm_file"><Preference android:key="fpm_import_now" android:summary="@string/pref_impoty_summary" android:title="@string/pref_import"></Preference>
-</PreferenceCategory>
+	<PreferenceCategory android:title="@string/general">
+
+		<CheckBoxPreference android:key="fpm_copy_password_on_launch"
+			android:title="@string/pref_copy_password_on_launch" android:summary="@string/pref_copy_password_on_launch_summary"
+			android:defaultValue="false" />
+
+		<CheckBoxPreference android:key="fpm_default_action_launch"
+			android:title="@string/pref_default_action_launch" android:summary="@string/pref_default_action_launch_summary"
+			android:defaultValue="false" />
+
+		<ListPreference android:key="fpm_autolock"
+			android:title="@string/pref_autolock" android:summary="@string/pref_autolock_summary"
+			android:entries="@array/pref_autolock_entries" android:entryValues="@array/pref_autolock_values"
+			android:dialogTitle="@string/pref_autolock_after"
+			android:defaultValue="60" />
+
+	</PreferenceCategory>
+
+	<PreferenceCategory android:title="@string/fpm_file">
+
+		<EditTextPreference android:key="fpm_sd_location" 
+			android:defaultValue="/sdcard/fpm"
+			android:summary="@string/pref_fpm_sd_location_summary"
+			android:title="@string/pref_fpm_sd_location" />
+
+		<CheckBoxPreference android:key="fpm_internal_storage"
+			android:title="@string/pref_internal_storage" 
+			android:summary="@string/pref_internal_storage_summary" />
+
+	</PreferenceCategory>
 
 </PreferenceScreen>
