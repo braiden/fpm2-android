@@ -41,6 +41,7 @@ import javax.crypto.NoSuchPaddingException;
 
 import org.apache.commons.lang.StringUtils;
 import org.braiden.fpm2.crypto.FpmCipher;
+import org.braiden.fpm2.crypto.FpmCryptoUtils;
 import org.braiden.fpm2.crypto.FpmKeyGenerator;
 import org.braiden.fpm2.crypto.JCEFpmCipher;
 import org.braiden.fpm2.crypto.NullFpmCipher;
@@ -50,6 +51,7 @@ import org.braiden.fpm2.model.DataObject;
 import org.braiden.fpm2.model.FpmFile;
 import org.braiden.fpm2.model.LauncherItem;
 import org.braiden.fpm2.model.PasswordItem;
+import org.braiden.fpm2.util.HexUtils;
 import org.braiden.fpm2.util.PropertyUtils;
 import org.braiden.fpm2.xml.FpmFileXmlParser;
 import org.xml.sax.SAXException;
@@ -274,7 +276,18 @@ public class FpmCrypt {
 			Log.w(TAG, "Failed to decrypt vstring.", e);
 		}
 		
-		return MessageDigest.isEqual(myVstring, fileVstring);
+		boolean valid = true;
+		for (int n = 0; n < myVstring.length && myVstring[n] != 0 && valid; n++)
+		{
+			valid = myVstring[n] == fileVstring[n];
+		}
+		
+		if (valid) {
+			return true;
+		} else {
+			Log.d(TAG, "vstring bad. " + HexUtils.toHex(myVstring) + " != " + HexUtils.toHex(fileVstring));
+			return false;
+		}
 	}
 	
 	/**

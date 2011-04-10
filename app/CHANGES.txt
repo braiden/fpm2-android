@@ -11,3 +11,6 @@
 	  required to remove fpm file from sd card, after imported to memory
 	- notes are displayed as multiple lines
 	- http:// is assumed when launching URLs that provide no schema
+- 0.03
+	- validation of vstring is done using c-string style comparison.
+	  stops a nil. fix for some files which reject password.
