@@ -1,0 +1,4 @@
+Provides access to FPM2 password database on Android. FPM2 is Linux/GTK+ password manager. ACCESS IS READ-ONLY, so if you're not already managing password on your PC using FPM2 this software is probably useless.
+
+Market Link:
+https://market.android.com/search?q=org.braiden.fpm2
